@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מחולל דו״ח חברתי – התחדשות עירונית</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{
+  --bg:#F2F6F8; --panel:#ffffff; --ink:#0C2238; --muted:#5B6B7A; --line:#D6E0E6;
+  --brand:#0C3058; --brand-2:#E3F2EF; --accent:#206070; --teal:#50B0A0; --teal-d:#206070; --warn:#b4532a; --warn-bg:#fbeee6;
+  --ok:#2d7a46; --ok-bg:#e6f3ea; --gap:#a3361f; --radius:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:'Rubik',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--brand)}
+header.top{position:sticky;top:0;z-index:1000;display:flex;align-items:center;gap:12px;padding:10px 18px;background:#0C3058;color:#fff;flex-wrap:wrap;border-bottom:4px solid var(--teal)}
+header.top h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.2px}
+header.top .sub{opacity:.7;font-size:13px}
+header.top .sp{flex:1}
+header.top select,header.top button{background:#16406B;border:1px solid #2B5A86;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+header.top button:hover{background:#206070}
+#saveState{font-size:12px;opacity:.75;min-width:70px}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:calc(100vh - 56px)}
+nav.steps{background:var(--panel);border-left:1px solid var(--line);padding:14px 10px;position:sticky;top:56px;height:calc(100vh - 56px);overflow:auto}
+nav.steps .grp{font-size:12px;color:var(--muted);margin:14px 10px 6px;font-weight:700;letter-spacing:.3px}
+nav.steps button{display:flex;width:100%;align-items:center;gap:8px;text-align:right;border:0;background:none;padding:8px 10px;border-radius:9px;cursor:pointer}
+nav.steps button:hover{background:#f0f2ef}
+nav.steps button.on{background:var(--brand-2);color:var(--brand);font-weight:600;box-shadow:inset -3px 0 0 var(--teal)}
+nav.steps .num{width:22px;height:22px;border-radius:50%;background:#eceeea;display:grid;place-items:center;font-size:12px;flex:none}
+nav.steps button.on .num{background:var(--teal-d);color:#fff}
+nav.steps .bar{margin-inline-start:auto;width:34px;height:5px;background:#eceeea;border-radius:3px;overflow:hidden;flex:none}
+nav.steps .bar i{display:block;height:100%;background:var(--teal)}
+main{padding:22px 28px 80px;max-width:1150px;width:100%;min-width:0}
+h2.stitle{margin:0 0 4px;font-size:24px}
+.lead{color:var(--muted);margin:0 0 16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px}
+.card h3{margin:0 0 10px;font-size:17px}
+.card h4{margin:14px 0 6px;font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px 14px}
+.f{display:flex;flex-direction:column;gap:4px}
+.f.wide{grid-column:1/-1}
+.f label{font-size:13px;font-weight:600;color:#38423d}
+.f .hint{font-size:12px;color:var(--muted)}
+.f input,.f select,.f textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;width:100%}
+.f textarea{min-height:84px;resize:vertical}
+.f input:focus,.f select:focus,.f textarea:focus,td input:focus,td select:focus{outline:2px solid #9FD3C9;border-color:var(--brand)}
+.src{font-size:11.5px;color:var(--muted);display:flex;gap:4px;align-items:center}
+.src input{font-size:11.5px;padding:2px 6px;border:1px dashed var(--line);border-radius:6px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 13px;cursor:pointer;font-weight:600}
+.btn:hover{background:#f3f5f2}
+.btn.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn.pri:hover{background:#206070}
+.btn.sm{padding:4px 9px;font-size:13px}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ai{background:#f5efe6;border-color:#e8d6bd;color:#7a4a17}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.guide{background:#f7f8f5;border:1px solid var(--line);border-radius:10px;margin-bottom:16px}
+.guide summary{cursor:pointer;padding:10px 14px;font-weight:600;color:var(--teal-d)}
+.guide div{padding:0 16px 12px;font-size:14px}
+.guide ul{margin:4px 0;padding-inline-start:20px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:right;vertical-align:top}
+table.t th{font-size:12.5px;color:var(--muted);font-weight:700;background:#fafbf9;position:sticky;top:0}
+table.t td input,table.t td select{width:100%;min-width:60px;border:1px solid transparent;border-radius:6px;padding:4px 5px;background:transparent}
+table.t td select{min-width:100px}
+table.t td input:hover,table.t td select:hover{border-color:var(--line);background:#fff}
+.scroll{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--brand-2);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:22px;color:var(--teal-d)}
+.kpi span{font-size:12.5px;color:#3d4a44}
+.kpi.w{background:var(--warn-bg)} .kpi.w b{color:var(--warn)}
+.note{padding:9px 12px;border-radius:9px;font-size:14px;margin:8px 0}
+.note.warn{background:var(--warn-bg);color:#7b3317}
+.note.ok{background:var(--ok-bg);color:#1f5a33}
+.note.info{background:#eef3f8;color:#24425f}
+.pill{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:20px;background:#eceeea;color:#444}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.bad{background:var(--warn-bg);color:var(--warn)}
+#map,.map{height:380px;border-radius:10px;border:1px solid var(--line)}
+.leaflet-container{font-family:inherit}
+.navbtns{display:flex;justify-content:space-between;margin-top:22px}
+.recs li{margin-bottom:8px;list-style:none;display:flex;gap:8px;align-items:flex-start}
+.recs{padding:0}
+.recs .cat{font-size:11.5px;color:var(--accent);font-weight:700}
+.recs li.off span{opacity:.45;text-decoration:line-through}
+.photos{display:flex;gap:10px;flex-wrap:wrap}
+.photos figure{margin:0;width:170px}
+.photos img{width:170px;height:115px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.photos input{width:100%;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 5px;margin-top:4px}
+.gaplist li{margin:3px 0}
+.modal{position:fixed;inset:0;background:rgba(10,20,16,.45);display:none;align-items:center;justify-content:center;z-index:5000}
+.modal.on{display:flex}
+.modal .box{background:#fff;border-radius:14px;max-width:620px;width:94%;padding:20px;max-height:88vh;overflow:auto}
+.toast{position:fixed;bottom:18px;left:18px;background:#0C3058;color:#fff;padding:10px 16px;border-radius:10px;z-index:6000;opacity:0;transition:.25s;pointer-events:none;max-width:420px}
+.toast.on{opacity:1}
+/* report paper */
+.paper{background:#fff;border:1px solid var(--line);border-radius:6px;padding:46px 54px;box-shadow:0 4px 24px rgba(0,0,0,.06);font-size:15px;line-height:1.7}
+.paper h1{font-size:26px;margin:0 0 6px;color:#0C3058}
+.paper h2{font-size:20px;border-bottom:3px solid #50B0A0;padding-bottom:4px;margin:30px 0 10px;color:#0C3058}
+.paper h3{font-size:16.5px;margin:20px 0 6px;color:#206070}
+.paper table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:13.5px}
+.paper th,.paper td{border:1px solid #c9cfca;padding:5px 7px;text-align:right;vertical-align:top}
+.paper th{background:#E3F2EF;color:#0C3058}
+.paper .gap{background:#fde8e1;color:var(--gap);padding:0 4px;border-radius:3px;font-weight:600}
+.paper .meta td{border:0;padding:2px 6px}
+.paper .cover{border-bottom:1px solid #ccc;padding-bottom:18px;margin-bottom:10px}
+.paper .small{font-size:12.5px;color:#555}
+.paper img{max-width:48%;margin:4px;border-radius:4px}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr}
+  nav.steps{position:static;height:auto;display:flex;overflow-x:auto;padding:8px;gap:4px;border-left:0;border-bottom:1px solid var(--line)}
+  nav.steps .grp,nav.steps .bar{display:none}
+  nav.steps button{white-space:nowrap;width:auto}
+  main{padding:16px 12px 60px}
+  .paper{padding:22px 16px}
+}
+@media print{
+  body{background:#fff}
+  header.top,nav.steps,.noprint,.navbtns,.toast{display:none!important}
+  .layout{display:block} main{padding:0;max-width:none}
+  .paper{border:0;box-shadow:none;padding:0}
+  .paper .gap{background:#fde8e1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .paper h2{page-break-after:avoid} .paper table{page-break-inside:auto}
+}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:0 16px}
+.radio{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;padding:7px 12px;cursor:pointer;background:#fff}
+.radio:has(input:checked){border-color:var(--brand);background:var(--brand-2);color:var(--brand);font-weight:700}
+.pill.rt{background:#0C3058;color:#fff;font-size:12.5px;padding:3px 10px}
+.sugg{border-bottom:1px dashed var(--line);padding:8px 0;font-size:14px}
+.sugg.used{opacity:.55}
+.over{color:var(--warn);font-weight:700}
+.b-ok{background:#dff0e3}.b-mid{background:#fdf0cf}.b-high{background:#f8d6cc}
+.legend span{padding:2px 8px;border-radius:5px;margin-left:6px}
+table.gantt td.gc{width:26px;cursor:pointer;border:1px solid #e3e6e2;background:#fff}
+table.gantt td.gc.on{background:var(--teal)}
+.bcard{display:flex;gap:14px;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0;background:#fff}
+.bcard h4{margin:0 0 4px}.bcard ul{margin:0;padding-inline-start:18px;font-size:14px}
+.bcard img{width:180px;height:120px;object-fit:cover;border-radius:6px}
+.bcard .ph{width:180px;height:120px;border:1px dashed #bbb;border-radius:6px;display:grid;place-items:center;color:#999;font-size:12px;text-align:center}
+.paper .big{font-size:19px;font-weight:700}
+.paper .src{font-size:12px;color:#666;border-top:1px dotted #ccc;padding-top:3px}
+.paper .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.paper img.hero{max-width:48%;margin:4px}
+.paper figure.fig{display:inline-block;width:31%;margin:0 1% 8px 0}.paper figure.fig img{max-width:100%}
+.paper table.gantt-r td{border:1px solid #ccc;padding:2px 4px}.paper table.gantt-r td.on{background:#50B0A0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.paper td.grp{background:#eef2ef}
+.paper .b-ok,.paper .b-mid,.paper .b-high{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@media (max-width:860px){.paper .two{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.bcard{flex-direction:column}}
+.aflog{max-height:55vh;overflow:auto;font-size:14px}.af{padding:5px 8px;border-radius:6px;margin:3px 0}.af.ok{background:#e6f3ea}.af.err{background:#fbeee6;color:#7b3317}.af.warn{background:#fdf4dc}.af.run{background:#eef3f8}
+
+header.top .logo{width:30px;height:30px;flex:none}
+.inp{border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:180px;background:#fff}
+.urlist{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:220px;overflow:auto}
+.uritem{text-align:right;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+.uritem:hover{background:var(--brand-2)}
+.uritem i,.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.legend{display:flex;flex-wrap:wrap;gap:12px}
+.legend i.sel{border:3px solid #0C3058;background:rgba(80,176,160,.35)}
+.legend i.bld{border:2px solid #0C3058;background:#fff;border-radius:50%}
+.selbox{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;background:var(--brand-2);border-right:4px solid var(--teal);border-radius:8px;padding:10px 14px;margin-top:10px}
+.urpop{font-family:'Rubik',sans-serif;font-size:13px;line-height:1.5;direction:rtl;text-align:right}
+.card.picker{border-top:4px solid var(--teal)}
+.disclaimer{font-size:11.5px;opacity:.7}
+</style>
+</head>
+<body>
+<header class="top">
+  <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="12" width="7" height="17" rx="1" fill="#50B0A0"/><rect x="12.5" y="5" width="7" height="24" rx="1" fill="#fff"/><rect x="22" y="9" width="7" height="20" rx="1" fill="#50B0A0"/></svg><h1>מחולל דו״ח חברתי</h1><span class="sub">התחדשות עירונית · לפי מדריך 3.0 של הרשות הממשלתית<br><span class="disclaimer">כלי עזר עצמאי – אינו כלי רשמי של הרשות</span></span>
+  <span class="sp"></span>
+  <select id="projSel" title="פרויקטים שמורים"></select>
+  <button id="bNew">+ פרויקט חדש</button>
+  <button id="bDemo" title="פרויקט לדוגמה עם נתונים בדויים">דוגמה</button>
+  <button id="bExport">⬇ שמירה לקובץ</button>
+  <button id="bImport">⬆ טעינה</button>
+  <button id="bSettings">⚙ הגדרות</button>
+  <span id="saveState"></span>
+  <input type="file" id="importFile" accept=".json,application/json" hidden>
+</header>
+<div class="layout"><nav class="steps" id="nav"></nav><main id="main"></main></div>
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+/* =====================================================================
+   מחולל דו״ח חברתי – לפי "מדריך להכנת דו״ח חברתי במיזמי התחדשות עירונית"
+   גרסה 3.0 (הרשות הממשלתית להתחדשות עירונית, 2026) ותבנית הבסיס
+   ===================================================================== */
+const VER='3.0';
+const GUIDE_LINKS=[
+  {t:'דף הפרסום של המדריך באתר הרשות (gov.il)',u:'https://www.gov.il/he/departments/publications/reports/doch_chevrati_hitchadshut_ironit',d:'הדף הרשמי'},
+  {t:'מדריך גרסה 2.0 (פברואר 2021) – לעיון היסטורי',u:'https://www.gov.il/BlobFolder/reports/doch_chevrati_hitchadshut_ironit/he/hithadshut_ironit_documents_madrich_doch_chevrati_v2_final.pdf',d:'הוחלף ע״י 3.0'},
+  {t:'מדריך ליזם לעבודה חברתית במיזמי פינוי־בינוי',u:'https://www.gov.il/BlobFolder/reports/madrich-leyazam-leavoda-chevratit/he/hithadshut_ironit_documents_madrich-leyazam-leavoda-chevratit.pdf',d:'מסמך משלים'},
+  {t:'הנחיות לעבודה חברתית למנהלות להתחדשות עירונית',u:'https://www.gov.il/BlobFolder/reports/hanchayot_leavoda_chevratit/he/hithadshut_ironit_documents_hanchayot_leavoda_hevratit.pdf',d:'מסמך משלים'}
+];
+const RT=['מצב קיים','הערכת חלופות','מלא'];
+const RT_LABEL={'מצב קיים':'דו״ח מצב קיים','הערכת חלופות':'היבטים חברתיים בהערכת חלופות','מלא':'דו״ח חברתי מלא'};
+const STEPS=[
+  {id:'project', t:'שער ופרטי הפרויקט', g:'הגדרה'},
+  {id:'sources', t:'מקורות מידע', g:'דו״ח מצב קיים'},
+  {id:'urban',   t:'המרחב העירוני והשכונתי', g:'דו״ח מצב קיים'},
+  {id:'compound',t:'רקע על המתחם ובניינים', g:'דו״ח מצב קיים'},
+  {id:'housing', t:'דיור, זיקה לנכס ונטל עלות', g:'דו״ח מצב קיים'},
+  {id:'pop',     t:'אוכלוסיית המתחם', g:'דו״ח מצב קיים'},
+  {id:'org',     t:'התארגנות והתקשרות', g:'דו״ח מצב קיים'},
+  {id:'svc',     t:'שירותים, נגישות ותפקוד', g:'דו״ח מצב קיים'},
+  {id:'survey',  t:'הסקר החברתי ושיתוף ציבור', g:'סקר ודו״ח מלא'},
+  {id:'concl',   t:'מסקנות, זרקור והמלצות', g:'מסקנות והמלצות'},
+  {id:'alts',    t:'הערכת חלופות', g:'מסקנות והמלצות'},
+  {id:'gantt',   t:'תהליך העבודה החברתית', g:'מסקנות והמלצות'},
+  {id:'summary', t:'תקציר ונספחים', g:'הפקה'},
+  {id:'report',  t:'טיוטת הדו״ח וייצוא', g:'הפקה'}
+];
+const GUIDE={
+ project:`<ul><li>המדריך (3.0) כולל: תבניות בסיס לדו״ח (מצב קיים, הערכת חלופות, מלא), מסמך מלווה וטבלה לניהול מידע חברתי במתחם.</li><li>ההנחיות חלות על תכניות שמקדמים <b>גופים ציבוריים</b> וגם על תכניות ב<b>מסלול מיסוי</b>. הדו״ח מוגש כמסמך רקע למוסדות התכנון.</li><li><b>דו״ח מצב קיים</b> – 3–5 חודשים מתחילת עבודת היועץ, ולא אחרי דו״ח המצב הקיים של עורכי התכנית.</li><li><b>הערכת חלופות</b> – בשלב בחירת החלופה, במתכונת תקציר; מוגש לראש צוות התכנון ולמנהלת (לא לרשות הממשלתית). מומלץ שהסקר החברתי ייערך לפניו.</li><li><b>דו״ח מלא</b> – מוקדם ככל האפשר אחרי שלב החלופות, רצוי בשלב עיבוד החלופה המועדפת.</li></ul>`,
+ sources:`<ul><li>מקורות מוצגים ב<b>טבלה מובנית</b> שמאפשרת לבודק לראות על מה הדו״ח מבוסס ומה חסר; בנוסף – הפניה למקור בהערת שוליים לאורך הדו״ח.</li><li>חובה לערוך <b>לפחות סיור אחד</b> בשכונה.</li><li>בדו״ח המלא מתווסף שקף על הסקר החברתי.</li></ul>`,
+ urban:`<ul><li><b>נתונים חברתיים במבט השוואתי</b>: א״ס/שכונה, עיר, ישראל, ובמידת האפשר המתחם (במצב קיים – הערכה כמותית או מילולית). חובה: גודל משק בית ממוצע, מדד חברתי־כלכלי, שיעור שכירות, שיעור קשישים (65+), שיעור ילדים. מקור עיקרי: הלמ״ס (מפקד 2022). יש להתייחס לחפיפה בין השכונה לאזור הסטטיסטי.</li><li><b>סוגיות חברתיות במסמכי מדיניות ותכניות מתאר</b> – תכנית מתאר כוללנית, מדיניות התחדשות, תחזוקה, תמורות, תמהיל, דיור בהישג יד, פרוגרמה.</li><li><b>מיזמי בנייה בסביבה ואוכלוסייה עתידית</b> – מיזמים בשלב מתקדם; המשמעויות החברתיות שלהם (למשל גריעת מלאי שכירות); מקרה בוחן של אוכלוסייה במיזם חדש.</li></ul>`,
+ compound:`<ul><li><b>הקו הכחול</b> – מפה על רקע תצ״א עם חלקות, כתובות ויח״ד בכל מבנה, שימושים ועוגנים קהילתיים.</li><li>סך היחידות הקנייניות (דיור + מסחר/תעסוקה), סוגי המבנים, תפקוד המתחם במרחב.</li><li><b>כרטיסיות בניינים</b> (נספח): יח״ד, זיקה לנכס, רמת תחזוקה, יח״ד לא טיפוסיות. עד 10 בניינים משותפים – כרטיסייה לכל בניין; 11 ומעלה – כרטיסייה למקבצי בניינים; ובנוסף כרטיסייה מרוכזת למבנים לא טיפוסיים.</li></ul>`,
+ housing:`<ul><li>שיעורי בעלות/שכירות ודיור ציבורי בהשוואה לעיר ולארץ; התפלגות הזיקה לנכס – על בסיסה נקבע יעד הראיונות לכל קבוצה.</li><li>תמהיל גודל יח״ד (30–55, 56–80, 81–105, 106–140, 141+ מ״ר) מול המלצת מינהל התכנון; דיור מכליל.</li><li>דו״ח מלא: <b>מעל 30% שכירות</b> – אפיון שוכרים, משכירים ושוק השכירות; <b>מעל 10% דיור ציבורי</b> – גודל הדירות, מלאי הדיור הציבורי בעיר ופעולות יידוע והתקשרות עם החברה המשכנת.</li><li><b>נטל עלות הדיור</b>: שכ״ד או החזר משכנתא (75% מימון, 30 שנה) מול הכנסה נטו (ברירת מחדל: עשירונים 5 ו־7, ממוצע עירוני וארצי). <b>עד 25% – סביר; 25–35% – בינוני; מעל 35% – גבוה.</b> נתוני מחיר ושכירות – משמאי התכנית.</li></ul>`,
+ pop:`<ul><li>טבלה מרוכזת של אוכלוסיות ייחודיות: אזרחים ותיקים (65+; לציין במפורש 70+ כשמדובר בתמורות), אנשים עם מוגבלויות, נתמכי רווחה, דיירי דיור ציבורי.</li><li>מיפוי גורמים ודמויות מפתח; תיאור כמותני ואיכותני של מגמות והיסטוריה חברתית.</li><li>דו״ח מלא: ניתוח דמוגרפי (גודל משק בית, גילאים), אפיון חברתי־תרבותי (דת, זיקה לדת, ילידי חו״ל, תרגום), מצב סוציו־אקונומי לפי זיקה לנכס, חוסן וקשרים קהילתיים.</li></ul>`,
+ org:`<ul><li>מידע רגיש – יש להקפיד על <b>ציון המקור</b> לכל נתון ולצרף אסמכתאות (כתבי הסמכה, ייפויי כוח, תצהיר שיעור התקשרות) כנספח. במסלול מיסוי היזם מממן את היועץ – הקפדה יתרה על נאמנות לעובדות.</li><li>מיפוי ברמת הבניין: הסמכת נציגויות, ייצוג משפטי, התקשרות עם יזם (סוג חוזה ואחוז).</li><li>היבטים חברתיים וכלכליים בחוזה הסופי: קרן תחזוקה ושבר, שכירות זמנית, תמורות, תמורות חלופיות לאזרחים ותיקים, ליווי נוסף.</li><li>דו״ח מלא: עמדות הדיירים כלפי המיזם והגורמים המעורבים (על בסיס הסקר).</li></ul>`,
+ svc:`<ul><li>להיעזר במיפויי יועצי הפרוגרמה, הנוף והתחבורה ולהתמקד ב<b>רובד החברתי</b> – רמת השימוש בפועל, צרכים, שביעות רצון.</li><li>מוסדות ציבור – כולל הצורך ב<b>מענה חלופי בתקופת הבנייה</b>; מסחר; שטחים פתוחים ציבוריים ופרטיים.</li><li>תנועה והתניידות במרחב <b>סף הבית (עד 7 דקות הליכה)</b>: נגישות לתח״צ, בעלות על רכב, יוממות ברכב (למ״ס לא״ס), חניה, הליכתיות.</li></ul>`,
+ survey:`<ul><li>שיעור הראיונות מכלל <b>היחידות הקנייניות</b> (דיור + מסחר/תעסוקה): עד 100 יח״ד – <b>50%</b>; מעל 100 – <b>35%</b>.</li><li>יעד לפי קבוצות, ביחס לשיעורן במתחם: בעלי דירה מתגוררים (ככלל מעל 35% מהראיונות), בעלי דירה לא מתגוררים, שוכרים, דיור ציבורי (ככלל פחות מ־35% כל אחת), ובעלי עסקים – בעלי הנכס ושוכריו.</li><li>בדו״ח המלא: מספר הסקרים שבוצעו מול היעד, ופריסה לפי בניינים.</li><li>שאלות חוסן מבוססות על CCRAM ומדד הקהילתיות של החברה למתנ״סים.</li></ul>`,
+ concl:`<ul><li><b>סיכום ומסקנות</b>: השפעת המיזם (חיובית ושלילית), חסמים, חוזקות, צרכי האוכלוסייה העתידית – בטבלת ממצא ↔ אתגר/הזדמנות.</li><li><b>זרקור</b>: הרחבה על סוגיה ייחודית למתחם.</li><li><b>המלצות</b> בטבלה אחידה: ממצא, המלצה, מועד/שלב יישום, גורם אחראי, היכן להטמיע (ובדו״ח המלא – סטטוס הטמעה). להימנע מהמלצות "משוכפלות" – לפרט את הייחודי למתחם.</li><li>בדו״ח מצב קיים – גם <b>2–4 קריטריונים לבחינת חלופות</b>.</li></ul>`,
+ alts:`מסמך במתכונת תקציר, בשלב בחירת החלופה: לכל המלצה חברתית – הביטוי התכנוני שלה, וכיצד כל חלופה נותנת או לא נותנת לה מענה; וחוות דעת היועץ. נושאים לדוגמה: תמהיל יח״ד, בחינת בינוי־פינוי, גובה בינוי מגוון, חלוקה למתחמי מימוש לפי מצב ההתקשרות, דב״י/דיור מכליל/דיור מיוחד.`,
+ gantt:`גאנט מובנה לעבודה החברתית לפי לוח הזמנים התכנוני, הממצאים וסטטוס ההתארגנות, עם הרציונל ויעד הסקרים. בדו״ח המלא – סטטוס ביצוע ושינויים.`,
+ summary:`<ul><li><b>תקציר – עד 250 מילים</b>, במלל חופשי, המציג את עמדת היועץ ואת המתחם, עם תמונות מייצגות.</li><li>נספחים: כרטיסיות בניינים, מסמכי התארגנות והתקשרות; בדו״ח המלא – סיכום שיתוף הציבור, תובנות מתהליך ההתארגנות, תמונות נוספות.</li></ul>`,
+ report:`הדו״ח מופק לפי סוג התוצר. סעיפים חסרים מסומנים ב<span style="background:#fde8e1;color:#a3361f;padding:0 4px">[להשלמה]</span>.`
+};
+const GLOSSARY=[
+ ['דו״ח חברתי','התוצר שמגיש יועץ חברתי במסגרת קידום תכניות התחדשות עירונית, כחלק ממסמכי התכנית.'],
+ ['אזרחים ותיקים','בני ובנות 65 ומעלה. תמורות ייחודיות לקשישים בפינוי־בינוי מתייחסות לגיל 70 ומעלה – במקרה זה יצוין במפורש "70+".'],
+ ['אנשים עם מוגבלויות','אנשים עם מוגבלות בביצוע פעולות יום־יומיות כתוצאה מבעיה בריאותית, פיזית או נפשית.'],
+ ['נתמכי רווחה','משקי בית שבהם נפש אחת או יותר מקבלת שירות ממחלקת הרווחה.'],
+ ['הכנסה חודשית','לחישוב נטל עלות הדיור – הכנסה נטו למשק בית לחודש. בסקר החברתי – לפי הגדרה עצמית של נציג משק הבית ביחס לממוצע הארצי (ברוטו).'],
+ ['משק בית','אדם או קבוצת אנשים הגרים יחד בדירה אחת באופן קבוע ברוב ימות השבוע, עם תקציב משותף למזון (הלמ״ס).'],
+ ['משקי בית קטנים / גדולים','קטנים: 1–2 נפשות; גדולים: 6 נפשות ומעלה.'],
+ ['משק בית רב־דורי','משק בית שבו חיים יחד כמה דורות.'],
+ ['ילדים','בני ובנות 0–18.'],
+ ['דת / זיקה לדת','דת – לפי סיווג מרשם האוכלוסין (הלמ״ס). זיקה לדת – לפי הגדרה עצמית: חילוני, מסורתי, דתי/דתי מאוד, חרדי, מעורב, אחר.'],
+ ['מארגן','מי שמתקשר עם בעל דירה בהסכם לארגון עסקת התחדשות עירונית או פועל לקראת התקשרות כזו (חוק התחדשות עירונית [הסכמים לארגון עסקאות], תשע״ז–2017).'],
+ ['יזם','מי שמתקשר עם בעל דירה בעסקת פינוי ובינוי או בעסקה לפי תכנית החיזוק (שם).'],
+ ['עו״ד דיירים / מפקח דיירים','עו״ד המייצג את בעלי הדירות; מפקח (מהנדס/אדריכל) מטעם הדיירים בשלבי התכנון, הביצוע והמסירה.'],
+ ['מתחם / מקבץ פינוי בינוי','מתחם – שטח שהוכרז לפי סעיף 14 לחוק הרשות הממשלתית; מקבץ – בית משותף או מקבץ בתים שיש לפנות כדי להקים מבנה חדש (חוק פינוי ובינוי, תשס״ו–2006).'],
+ ['הרוב הדרוש','שני שלישים מהדירות במקבץ, שלוש חמישיות מהדירות בכל בית משותף, ויותר ממחצית מהרכוש המשותף בכל בית (חוק פינוי ובינוי).'],
+ ['יחידה קניינית / יחידות דיור','יחידה קניינית – כל יחידה בעלת משמעות קניינית (דיור, מסחר, תעסוקה); יחידות דיור – היחידות המשמשות למגורים.'],
+ ['יח״ד לא טיפוסיות','דירות גן/גג, דופלקס, צמודי קרקע, דירות מפוצלות, יחידות עם סיפוח חצר/גג או שימוש שאינו למגורים.'],
+ ['דיור בהישג יד','השכרה במחיר מופחת ו/או לטווח ארוך (התוספת השישית לחוק התכנון והבנייה).'],
+ ['דיור מכליל','דיור מיוחד (דיור מוגן, מעונות סטודנטים) ודירות בשטח 30–55 מ״ר כולל ממ״ד, ללא מרפסות (תמ״א 35).'],
+ ['נטל עלות הדיור','נטל שכר הדירה או ההחזר החודשי למשכנתא על הכנסת משק הבית – במצב הקיים ובתמונת העתיד.']
+];
+const TENURE=[ // groups as in v3.0 survey targets
+ {k:'ownRes',l:'בעלי דירה מתגוררים (כולל משפחה)'},{k:'ownNon',l:'בעלי דירה שאינם מתגוררים'},{k:'rent',l:'שוכרים'},{k:'ph',l:'דיור ציבורי'},{k:'biz',l:'בעלי עסקים'}];
+const MIX=[{k:'b1',l:'קטנה מאוד (30–55 מ״ר)'},{k:'b2',l:'קטנה (56–80)'},{k:'b3',l:'בינונית (81–105)'},{k:'b4',l:'גדולה (106–140)'},{k:'b5',l:'גדולה מאוד (141+)'}];
+const ROOMS=[{k:'r2',l:'2–2.5 חד׳'},{k:'r3',l:'3–3.5 חד׳'},{k:'r4',l:'4–4.5 חד׳'}];
+const CMP=[{k:'hh',l:'גודל משק בית (ממוצע)'},{k:'ses',l:'מדד חברתי־כלכלי (אשכול)'},{k:'rent',l:'מגורים בשכירות (%)'},{k:'eld',l:'אזרחים ותיקים 65+ (%)'},{k:'kids',l:'ילדים 0–18 (%)'},{k:'x1',l:'',custom:1},{k:'x2',l:'',custom:1}];
+const CMP_COLS=[{k:'cmp',l:'מתחם (הערכה)'},{k:'sa',l:'א״ס / שכונה'},{k:'city',l:'העיר'},{k:'il',l:'ישראל'}];
+const SRC_MUNI=[['arnona','ארנונה'],['water','תאגיד מים'],['welfare','רווחה'],['m106','מוקד 106']];
+const SRC_DOCS=[['repLetters','כתבי הסמכת נציגות'],['poa','ייפוי כוח משפטי'],['affidavit','תצהיר שיעור התקשרות חתום ע״י עו״ד דיירים'],['contract','עותק הסכם סופי / נון־שופ']];
+const SRC_POLICY=[['master','תכנית מתאר כוללנית'],['renewalPolicy','מסמך מדיניות התחדשות עירונית'],['program','פרוגרמה כלל־עירונית']];
+const OPT_USED=['כן','לא','לא התקבל'], OPT_DOC=['כן','לא התקבל','לא קיים'], OPT_POL=['כן','לא','אין בנמצא'];
+const STAGES=['עריכת מסמכי התכנית','בחירת חלופה','הפקדת התכנית','התנגדויות','אישור התכנית','הוצאת היתר','תכנית עיצוב','הריסה ובינוי','אכלוס'];
+const RESP=['ראש צוות התכנון','יועץ חברתי','יזם','עו״ד דיירים','המנהלת להתחדשות עירונית','מחלקת רווחה','מחלקת חינוך','אגף ההנדסה','החברה המשכנת'];
+const WHERE=['הוראות התכנית','תשריט/נספח בינוי','נספח חברתי','הסכם סופי','בקשה להיתר','תכנית עיצוב','מדיניות עירונית','תכנית הליווי החברתי'];
+const ALT_DEF=['תמהיל יח״ד מומלץ','בחינה של בינוי־פינוי','גובה בינוי מגוון','חלוקה למתחמי מימוש בהתאם למצב ההתקשרות','דב״י / דיור מכליל / דיור מיוחד'];
+const GANTT_DEF=['דו״ח מצב קיים','כנס שיתוף ציבור 1','הקמת נציגויות','הכרזה','עריכת סקר חברתי','מסמך הערכת חלופות','כנס שיתוף ציבור 2 – הצגת חלופות','הגשת דו״ח מלא'];
+const CATS=[
+  {k:'kinder',l:'גני ילדים ומעונות',th:400,q:'nwr["amenity"~"^(kindergarten|childcare)$"]'},
+  {k:'school',l:'בתי ספר',th:800,q:'nwr["amenity"="school"]'},
+  {k:'clinic',l:'מרפאות וקופות חולים',th:800,q:'nwr["amenity"~"^(clinic|doctors|hospital)$"]'},
+  {k:'pharmacy',l:'בתי מרקחת',th:800,q:'nwr["amenity"="pharmacy"]'},
+  {k:'grocery',l:'מכולת / סופרמרקט',th:400,q:'nwr["shop"~"^(supermarket|convenience|grocery|greengrocer)$"]'},
+  {k:'food',l:'בתי קפה ומסעדות',th:560,q:'nwr["amenity"~"^(cafe|restaurant|fast_food)$"]'},
+  {k:'park',l:'גינות, פארקים ומגרשי משחק',th:300,q:'nwr["leisure"~"^(park|playground|garden)$"]'},
+  {k:'worship',l:'בתי תפילה',th:560,q:'nwr["amenity"="place_of_worship"]'},
+  {k:'community',l:'מרכזים קהילתיים, ספריות, רווחה',th:800,q:'nwr["amenity"~"^(community_centre|social_centre|library|social_facility)$"]'},
+  {k:'bus',l:'תחנות אוטובוס',th:400,q:'node["highway"="bus_stop"]'},
+  {k:'rail',l:'רכבת / רכבת קלה',th:1000,q:'nwr["railway"~"^(station|halt|tram_stop)$"]'},
+  {k:'civic',l:'שירותים עירוניים ודואר',th:1000,q:'nwr["amenity"~"^(post_office|townhall|police|fire_station)$"]'}
+];
+function classify(tg){const a=tg.amenity||'',s=tg.shop||'',l=tg.leisure||'',r=tg.railway||'',h=tg.highway||'';
+  if(/^(kindergarten|childcare)$/.test(a))return'kinder';if(a==='school')return'school';if(/^(clinic|doctors|hospital)$/.test(a))return'clinic';if(a==='pharmacy')return'pharmacy';
+  if(/^(supermarket|convenience|grocery|greengrocer)$/.test(s))return'grocery';if(/^(cafe|restaurant|fast_food)$/.test(a))return'food';if(/^(park|playground|garden)$/.test(l))return'park';
+  if(a==='place_of_worship')return'worship';if(/^(community_centre|social_centre|library|social_facility)$/.test(a))return'community';if(h==='bus_stop')return'bus';
+  if(/^(station|halt|tram_stop)$/.test(r))return'rail';if(/^(post_office|townhall|police|fire_station)$/.test(a))return'civic';return null;}
+const PUBLIC_CATS=['kinder','school','clinic','community','worship','civic'];
+
+const YN=['כן','לא'], S5=['1','2','3','4','5'];
+const INCOME=['מעל הממוצע','מעט מעל הממוצע','דומה לממוצע','מעט מתחת לממוצע','מתחת לממוצע'];
+const RELIG=['חילוני','מסורתי','דתי/דתי מאוד','חרדי','מעורב','אחר'];
+const ATT=['תומך','מתלבט','מתנגד'];
+const COMP=['שדרוג דירה','שנמוך (דירה קטנה + תמורה)','השכרה','מכירה','חלופת דיור לבני 70+','אחר'];
+const RESP_COLS=[
+ {k:'bld',l:'בניין',type:'bld'},{k:'tenure',l:'זיקה לנכס',opts:TENURE.map(t=>t.l)},{k:'rooms',l:'חדרים',type:'num'},{k:'hh',l:'נפשות',type:'num'},
+ {k:'n65',l:'בני 65+',type:'num'},{k:'n70',l:'מהם 70+',type:'num'},{k:'kids',l:'ילדים 0–18',type:'num'},{k:'relig',l:'זיקה לדת',opts:RELIG},
+ {k:'abroad',l:'ארץ לידה (אם בחו״ל)',type:'text'},{k:'lang',l:'צריך תרגום',opts:YN},{k:'income',l:'הכנסה ביחס לממוצע',opts:INCOME},
+ {k:'attitude',l:'עמדה למיזם',opts:ATT},{k:'signed',l:'חתם',opts:YN},{k:'knowsRep',l:'מכיר נציגות',opts:YN},{k:'repSat',l:'שביעות רצון נציגות 1–5',opts:S5},
+ {k:'lawyerSat',l:'שביעות רצון עו״ד 1–5',opts:S5},{k:'devSat',l:'שביעות רצון יזם 1–5',opts:S5},{k:'comp',l:'תמורה מועדפת',opts:COMP},
+ {k:'cars',l:'רכבים',type:'num'},{k:'ptSat',l:'שביעות רצון תח״צ 1–5',opts:S5},{k:'neigh',l:'קשר עם שכנים 1–5',opts:S5},{k:'belong',l:'שייכות לשכונה 1–5',opts:S5},
+ {k:'likes',l:'מה אוהבים / לשמר',type:'text'},{k:'dislikes',l:'מה לא אוהבים',type:'text'},{k:'concerns',l:'חששות',type:'text'}
+];
+
+/* ---------------- STATE ---------------- */
+const LS_INDEX='srb3_index',LS_PREFIX='srb3_p_',LS_SETTINGS='srb_settings';
+const uid=()=>Math.random().toString(36).slice(2,10);
+function blank(){return{
+  id:uid(),v:3,created:new Date().toISOString(),updated:null,
+  meta:{compoundId:null,name:'',city:'',neighborhood:'',statArea:'',track:'',ptype:'',reportType:'מצב קיים',developer:'',planningHead:'',pm:'',consultant:'',consultantOrg:'',date:new Date().toISOString().slice(0,10),startedWork:''},
+  src:{muni:{},docs:{},tabu:'',cbs:'',policy:{},other:'',tours:[],interviews:[{role:'רכז/ת חברתי במנהלת'},{role:'עו״ס קהילתי/ת'},{role:'נציגים/ות'},{role:'חברי/ות ועד הבית'}],extra:[]},
+  urban:{cmp:{},summary:'',overlap:''}, policy:[], nearby:[], nearbyMeaning:'', futurePop:'', nearbyConcl:'',
+  buildings:[], compound:{boundaries:'',btypes:'',role:'',history:'',physical:'',geo:null,ur:null},
+  housing:{cityOwn:null,ilOwn:null,cityRent:null,ilRent:null,phCityShare:null,mix:{},mixRec:{},mixNotes:'',inclusive:'',phCompany:'',phCityStock:'',phSizes:'',rentersText:'',phText:''},
+  burden:{rent:{},rentNew:{},price:{},priceNew:{},rate:null,years:30,inc:{d1L:'5',d1:null,d2L:'7',d2:null,city:null,il:null},concl:''},
+  pop:{text:'',history:'',eld65:null,eld70:null,disabled:null,welfare:null,phHH:null,residents:null,households:null}, keyPeople:[],
+  popFull:{demo:'',culture:'',ses:'',resilience:''},
+  org:{startYear:'',source:'',process:'',repNotes:'',legalOffices:'',legalHow:'',legalImpr:'',devCompany:'',agreement:'',complaint:'',devEntry:'',devMeetings:'',devImpr:'',contract:{},docs:{},timeline:{},attitudes:'',summary:''},
+  svc:{inst:[],commerce:'',openPublic:'',openPrivate:'',ptLevel:'',carOwn:'',carCommute:'',parking:'',walk:'',fullInst:'',fullOpen:'',fullCommerce:'',fullMove:''},
+  env:{pois:[],summary:{},center:null,fetchedAt:null,radius:1000,walkMode:''},
+  survey:{resp:[],participation:[],orgInsights:'',notes:''},
+  concl:[], spotlight:'', recs:[], criteria:['','',''],
+  alts:{names:['חלופה 1','חלופה 2','חלופה 3'],rows:[],opinion:''},
+  gantt:[], ganttRationale:'', summary:'', photos:[]
+};}
+let S=blank();
+let settings={apiKey:'',model:'claude-sonnet-5-5',th:{}};
+let cur='project';
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+const index=()=>lsGet(LS_INDEX)||[];
+function deepMerge(base,o){if(o==null||typeof o!=='object'||Array.isArray(o))return o===undefined?base:o;const r=Array.isArray(base)?[]:{...base};for(const k in o){r[k]=(base&&typeof base[k]==='object'&&!Array.isArray(base[k])&&base[k]!==null)?deepMerge(base[k],o[k]):o[k];}return r;}
+let saveTimer=null;
+function save(now){clearTimeout(saveTimer);const doit=()=>{S.updated=new Date().toISOString();const ok=lsSet(LS_PREFIX+S.id,S);const idx=index().filter(p=>p.id!==S.id);idx.unshift({id:S.id,name:S.meta.name||'פרויקט ללא שם',updated:S.updated});lsSet(LS_INDEX,idx);
+  $('#saveState').textContent=ok?'✓ נשמר '+new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}):'⚠ השמירה בדפדפן נכשלה – שמרו לקובץ';renderProjSel();renderNav();};
+  if(now)doit();else{$('#saveState').textContent='…';saveTimer=setTimeout(doit,500);}}
+function load(id){const p=lsGet(LS_PREFIX+id);if(p){S=deepMerge(blank(),p);go(cur);}}
+
+/* ---------------- HELPERS ---------------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function getP(p){return p.split('.').reduce((o,k)=>o==null?undefined:o[k],S)}
+function setP(p,v){const ks=p.split('.');let o=S;ks.slice(0,-1).forEach((k,i)=>{if(o[k]==null)o[k]=/^\d+$/.test(ks[i+1])?[]:{};o=o[k];});o[ks[ks.length-1]]=v;}
+const n=v=>(v===''||v==null||isNaN(+v))?null:+v;
+const has=v=>v!==''&&v!=null&&!(Array.isArray(v)&&!v.length);
+function pct(a,b){a=n(a);b=n(b);if(a==null||!b)return null;return Math.round(a/b*1000)/10;}
+const fmtPct=p=>p==null?'—':p+'%';
+const fmtN=v=>v==null||v===''?'—':Number(v).toLocaleString('he-IL');
+const fmtNIS=v=>v==null?'—':'₪'+Math.round(v).toLocaleString('he-IL');
+function toast(m,ms=2600){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),ms);}
+const gap=l=>`<span class="gap">[להשלמה: ${esc(l)}]</span>`;
+const val=(v,l)=>has(v)?esc(v):gap(l);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function hav(a,b){const R=6371000,t=x=>x*Math.PI/180;const dLa=t(b[0]-a[0]),dLo=t(b[1]-a[1]);const h=Math.sin(dLa/2)**2+Math.cos(t(a[0]))*Math.cos(t(b[0]))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+const th=k=>n(settings.th[k])??CATS.find(c=>c.k===k).th;
+const bName=b=>((b.street||'')+' '+(b.num||'')).trim()||'בניין ללא כתובת';
+const words=t=>(t||'').trim().split(/\s+/).filter(Boolean).length;
+
+function F(path,label,type='text',o={}){
+  const v=getP(path);const id='f_'+path.replace(/\./g,'_');let input;
+  if(type==='textarea')input=`<textarea id="${id}" data-p="${path}" placeholder="${esc(o.ph||'')}" ${o.rows?`rows="${o.rows}"`:''}>${esc(v)}</textarea>`;
+  else if(type==='select')input=`<select id="${id}" data-p="${path}"><option value=""></option>${o.opts.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('')}</select>`;
+  else input=`<input id="${id}" type="${type==='num'?'number':type}" ${type==='num'?'data-num="1" step="any"':''} data-p="${path}" value="${esc(v)}" placeholder="${esc(o.ph||'')}">`;
+  return `<div class="f ${o.wide||type==='textarea'?'wide':''}"><label for="${id}">${label}${o.full?' <span class="pill">דו״ח מלא</span>':''}</label>${input}${o.hint?`<div class="hint">${o.hint}</div>`:''}</div>`;
+}
+const cellIn=(p,v,o={})=>o.opts?`<select data-p="${p}"><option></option>${o.opts.map(x=>`<option ${v===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`:o.area?`<textarea data-p="${p}" style="width:100%;min-height:${o.h||60}px;border:1px solid var(--line);border-radius:6px;padding:4px">${esc(v)}</textarea>`:`<input ${o.num?'type="number" data-num="1" step="any"':''} data-p="${p}" value="${esc(v)}" ${o.w?`style="width:${o.w}px"`:''} placeholder="${esc(o.ph||'')}">`;
+function listTable(arrPath,cols,o={}){const arr=getP(arrPath)||[];
+  return `<div class="scroll" ${o.noMax?'style="max-height:none"':''}><table class="t"><thead><tr>${cols.map(c=>`<th>${c.l}</th>`).join('')}<th></th></tr></thead><tbody>
+  ${arr.map((r,i)=>`<tr>${cols.map(c=>`<td>${cellIn(`${arrPath}.${i}.${c.k}`,r[c.k],c)}</td>`).join('')}<td><button class="btn ghost sm" data-del="${arrPath}" data-i="${i}">✕</button></td></tr>`).join('')||`<tr><td colspan="${cols.length+1}" class="small">אין רשומות</td></tr>`}
+  </tbody></table></div><button class="btn sm noprint" data-add="${arrPath}" style="margin-top:8px">+ ${o.addL||'שורה'}</button>`;}
+function guideBox(id){return GUIDE[id]?`<details class="guide"><summary>📘 מה מדריך 3.0 דורש בשלב זה</summary><div>${GUIDE[id]}</div></details>`:''}
+const isFull=()=>S.meta.reportType==='מלא';
+
+/* ---------------- DERIVED ---------------- */
+function totals(){const b=S.buildings;const sum=k=>b.reduce((s,x)=>s+(n(x[k])||0),0);
+  const units=sum('units'),com=sum('commercial'),signed=sum('signed');const years=b.map(x=>n(x.year)).filter(Boolean);
+  const ten={};TENURE.forEach(t=>ten[t.k]=sum(t.k));const tenSum=TENURE.reduce((s,t)=>s+ten[t.k],0);
+  const shared=b.filter(x=>n(x.units)>=4&&x.btype!=='צמוד קרקע').length;
+  return{nb:b.length,units,com,all:units+com,signed,signPct:pct(signed,units),yMin:years.length?Math.min(...years):null,yMax:years.length?Math.max(...years):null,ten,tenSum,atyp:sum('atypical'),shared};}
+const tenBase=()=>{const t=totals();return t.tenSum||t.all;};
+const ownRate=()=>{const t=totals();return pct(t.ten.ownRes,t.units);};
+const rentRate=()=>{const t=totals();return pct(t.ten.rent,t.units);};
+const phRate=()=>{const t=totals();return pct(t.ten.ph,t.units);};
+function sampleTarget(){const t=totals();if(!t.all)return null;return{rate:t.units<=100?50:35,n:Math.ceil(t.all*(t.units<=100?0.5:0.35))};}
+function surveyGroups(){const t=totals(),st=sampleTarget(),a=agg();const base=tenBase();
+  return TENURE.map(g=>{const share=pct(t.ten[g.k],base);const tgtN=st&&share!=null?Math.round(st.n*share/100):null;const done=a.N?a.tenure[g.l]||0:0;return{...g,share,tgtN,tgtPct:share,done,donePct:pct(done,a.N)};});}
+function agg(){const R=S.survey.resp||[];const N=R.length;
+  const cnt=(k,opts)=>{const o={};opts.forEach(x=>o[x]=0);R.forEach(r=>{if(r[k]&&o[r[k]]!=null)o[r[k]]++});return o;};
+  const yes=k=>R.filter(r=>r[k]==='כן').length;const nums=k=>R.map(r=>n(r[k])).filter(v=>v!=null);
+  const avg=a=>a.length?Math.round(a.reduce((s,x)=>s+x,0)/a.length*10)/10:null;const sum=a=>a.reduce((s,x)=>s+x,0);
+  const hh=nums('hh');const persons=sum(hh);
+  const texts=k=>[...new Set(R.map(r=>r[k]).filter(x=>x&&String(x).trim()))];
+  const incByTen={};TENURE.forEach(t=>{incByTen[t.l]={};INCOME.forEach(x=>incByTen[t.l][x]=0);});R.forEach(r=>{if(r.tenure&&r.income&&incByTen[r.tenure])incByTen[r.tenure][r.income]++;});
+  const countries={};R.forEach(r=>{if(r.abroad&&r.abroad.trim()){const c=r.abroad.trim();countries[c]=(countries[c]||0)+1;}});
+  const byB={};R.forEach(r=>{if(r.bld)byB[r.bld]=(byB[r.bld]||0)+1;});
+  const seniors=R.filter(r=>n(r.n70)>0);const sComp={};COMP.forEach(c=>sComp[c]=0);seniors.forEach(r=>{if(r.comp)sComp[r.comp]++});
+  return{N,tenure:cnt('tenure',TENURE.map(t=>t.l)),att:cnt('attitude',ATT),comp:cnt('comp',COMP),relig:cnt('relig',RELIG),income:cnt('income',INCOME),incByTen,
+   hhAvg:avg(hh),hhSmall:hh.filter(x=>x<=2).length,hhLarge:hh.filter(x=>x>=6).length,hhN:hh.length,persons,
+   p65:sum(nums('n65')),p70:sum(nums('n70')),pKids:sum(nums('kids')),abroad:R.filter(r=>r.abroad&&r.abroad.trim()).length,countries,lang:yes('lang'),
+   signed:yes('signed'),knowsRep:yes('knowsRep'),repSat:avg(nums('repSat')),lawyerSat:avg(nums('lawyerSat')),devSat:avg(nums('devSat')),ptSat:avg(nums('ptSat')),
+   neigh:avg(nums('neigh')),belong:avg(nums('belong')),carsAvg:avg(nums('cars')),noCar:nums('cars').filter(c=>c===0).length,
+   likes:texts('likes'),dislikes:texts('dislikes'),concerns:texts('concerns'),byB,seniors:seniors.length,sComp};}
+function mortgage(price,rate,years){price=n(price);rate=n(rate);if(price==null||rate==null)return null;const L=price*0.75,r=rate/100/12,m=(years||30)*12;return r?L*r/(1-Math.pow(1+r,-m)):L/m;}
+function burdenClass(p){if(p==null)return'';return p<25?'b-ok':p<=35?'b-mid':'b-high';}
+function burdenLabel(p){if(p==null)return'—';return p<25?'סביר':p<=35?'בינוני':'גבוה';}
+function incomes(){const I=S.burden.inc;return[{l:`עשירון ${I.d1L||'X'}`,v:n(I.d1)},{l:`עשירון ${I.d2L||'X'}`,v:n(I.d2)},{l:'ממוצע עירוני',v:n(I.city)},{l:'ממוצע ארצי',v:n(I.il)}];}
+function burdenRows(kind,future){const B=S.burden;const src=kind==='rent'?(future?B.rentNew:B.rent):(future?B.priceNew:B.price);
+  return ROOMS.map(r=>{const base=kind==='rent'?n(src[r.k]):mortgage(src[r.k],B.rate,B.years);return{l:r.l,price:kind==='buy'?n(src[r.k]):null,equity:kind==='buy'&&n(src[r.k])?n(src[r.k])*0.25:null,monthly:base,ratios:incomes().map(i=>i.v&&base?Math.round(base/i.v*1000)/10:null)};});}
+
+/* ---------------- AUTO RECOMMENDATIONS (suggestions) ---------------- */
+function suggestRecs(){
+  const t=totals(),P=S.pop,O=S.org,a=agg(),R=[];const add=(id,type,finding,rec,resp,stage,where)=>R.push({id,type,finding,rec,resp,stage,where});
+  const e70=n(P.eld70),e65=n(P.eld65);
+  if(e70>0||pct(e65,P.residents)>=15) add('eld','חברתית',`במתחם ${e65??'—'} אזרחים ותיקים (65+)${e70?`, מהם ${e70} בני 70+`:''}.`,'ראיון אישי לכל משק בית עם בני 70+, הנגשת התמורות החלופיות הקבועות בחוק, ושקילת בינוי־פינוי ודירות קטנות ונגישות בתמהיל.','יועץ חברתי, יזם','עריכת מסמכי התכנית','נספח חברתי, הסכם סופי');
+  const rr=rentRate(); if(rr!=null&&rr>30) add('rent','תכנונית',`שיעור השכירות במתחם ${rr}% (מעל 30%).`,'אפיון שוכרים, משכירים ושוק השכירות בדו״ח המלא; בחינת דיור בהישג יד / להשכרה ארוכת טווח בתמהיל, ופעולות ליידוע השוכרים לקראת הפינוי.','ראש צוות התכנון, יועץ חברתי','עריכת מסמכי התכנית','הוראות התכנית');
+  const pr=phRate(); if(pr!=null&&pr>10) add('ph','חברתית',`${pr}% מהדירות בדיור ציבורי${S.housing.phCompany?' ('+S.housing.phCompany+')':''} (מעל 10%).`,'תיאום מוקדם עם החברה המשכנת ומשרד הבינוי והשיכון, יידוע הדיירים ושילובם בנציגות; התאמת גודל הדירות החלופיות להרכב משקי הבית.','יזם, החברה המשכנת, המנהלת','עריכת מסמכי התכנית','הסכם סופי'); else if(t.ten.ph>0) add('ph2','חברתית',`במתחם ${t.ten.ph} דירות דיור ציבורי.`,'יידוע דיירי הדיור הציבורי ותיאום עם החברה המשכנת.','יועץ חברתי, החברה המשכנת','עריכת מסמכי התכנית','תכנית הליווי החברתי');
+  if(n(P.disabled)>0) add('dis','חברתית',`${P.disabled} דיירים עם מוגבלויות.`,'נגישות פיזית ותקשורתית במפגשים, ליווי במעבר, ותכנון דירות נגישות בתמורה.','יזם, מחלקת רווחה','הריסה ובינוי','הסכם סופי');
+  if(n(P.welfare)>0) add('wel','חברתית',`${P.welfare} משקי בית נתמכי רווחה.`,'מנגנון מעקב וליווי פרטני מול מחלקת הרווחה לאורך שלבי המיזם ובפרט בתקופת הפינוי.','מחלקת רווחה, המנהלת','הריסה ובינוי','תכנית הליווי החברתי');
+  const bs=S.buildings.filter(b=>n(b.units)&&has(b.signed)).map(b=>({l:bName(b),p:pct(b.signed,b.units)}));
+  if(bs.length>1){const hi=bs.filter(x=>x.p>=66),lo=bs.filter(x=>x.p<40); if(hi.length&&lo.length) add('phase','תכנונית',`פער בשיעורי ההתקשרות: ${hi.map(x=>x.l+' '+x.p+'%').join(', ')} לעומת ${lo.map(x=>x.l+' '+x.p+'%').join(', ')}.`,'חלוקה למתחמי מימוש התואמת את בשלות הבניינים, ובחינת שלביות.','ראש צוות התכנון','בחירת חלופה','הוראות התכנית');}
+  const noAuth=S.buildings.filter(b=>b.repAuth==='לא'); if(noAuth.length) add('rep','חברתית',`ב־${noAuth.length} בניינים אין נציגות מוסמכת.`,'ליווי בחירה והסמכה של נציגויות בניינים ומתחם לפי מסמך העקרונות של הרשות הממשלתית.','יועץ חברתי, המנהלת','עריכת מסמכי התכנית','תכנית הליווי החברתי');
+  if(O.complaint==='כן') add('compl','חברתית','הוגשה קובלנה נגד היזם.','בירור הנסיבות מול המנהלת וחיזוק השקיפות במידע לדיירים.','המנהלת','עריכת מסמכי התכנית','תכנית הליווי החברתי');
+  if(t.atyp>0) add('atyp','תכנונית',`${t.atyp} יח״ד לא טיפוסיות (גן/גג, פיצולים, סיפוחים).`,'מיפוי מוקדם של סוגיות רישום וגיבוש עקרונות תמורה שקופים לבעלי יחידות לא טיפוסיות.','עו״ד דיירים, שמאי','עריכת מסמכי התכנית','הסכם סופי');
+  if(t.com>0) add('biz','תכנונית',`במתחם ${t.com} יחידות מסחר/תעסוקה.`,'מפגש ייעודי עם בעלי העסקים ושוכריהם, בחינת רציפות עסקית בזמן הבנייה ושילוב חזית מסחרית.','ראש צוות התכנון, יזם','עריכת מסמכי התכנית','הוראות התכנית');
+  const maint=S.buildings.map(b=>n(b.maint)).filter(v=>v!=null); if(maint.length&&maint.reduce((s,x)=>s+x,0)/maint.length<=2.5) add('maint','תכנונית','רמת תחזוקה נמוכה ברוב הבניינים.','קרן תחזוקה ושבר בהסכם, צמצום עלויות תחזוקה עתידיות (מגוון בינוי, הפרדת שטחים) והכשרת הנציגות.','יזם, ראש צוות התכנון','עריכת מסמכי התכנית','הסכם סופי, הוראות התכנית');
+  const bt=burdenRows('rent',true).flatMap(r=>r.ratios).filter(v=>v!=null); if(bt.some(v=>v>35)) add('burden','תכנונית','נטל עלות השכירות בדירות החדשות צפוי להיות גבוה (מעל 35% מההכנסה) לחלק מרמות ההכנסה.','דיור בהישג יד ודירות קטנות בתמהיל, כדי לצמצם דחיקה של שוכרים ומשקי בית בהכנסה נמוכה.','ראש צוות התכנון','עריכת מסמכי התכנית','הוראות התכנית');
+  const sm=S.env.summary||{};const miss=CATS.filter(c=>sm[c.k]&&(sm[c.k].count===0||(sm[c.k].dist!=null&&sm[c.k].dist>th(c.k)))).map(c=>c.l);
+  if(miss.length) add('svc','תכנונית',`פערי נגישות בהליכה: ${miss.join(', ')}.`,'שקילת שטחי ציבור ושימושים מעורבים בתכנית, בתיאום עם יועץ הפרוגרמה.','ראש צוות התכנון','עריכת מסמכי התכנית','הוראות התכנית');
+  const alt=S.svc.inst.filter(x=>x.alt==='כן'); if(alt.length) add('alt','חברתית',`${alt.length} מוסדות ציבור ידרשו מענה חלופי בתקופת הבנייה.`,'תכנון מענה חלופי ושלביות שתבטיח רציפות שירות.','המנהלת, אגף ההנדסה','הריסה ובינוי','תכנית עיצוב');
+  if(a.N){const st=sampleTarget();if(st&&a.N<st.n) add('sample','חברתית',`בוצעו ${a.N} מתוך ${st.n} סקרים נדרשים.`,'השלמת הסקר החברתי לפי היעד לכל קבוצה.','יועץ חברתי','עריכת מסמכי התכנית','תכנית הליווי החברתי');
+    const opp=pct(a.att['מתנגד'],a.N);if(opp>=20) add('opp','חברתית',`${opp}% מהמרואיינים מתנגדים למיזם.`,'מיפוי נימוקי ההתנגדות ותהליך הידברות ממוקד (כולל גישור).','יועץ חברתי, המנהלת','עריכת מסמכי התכנית','תכנית הליווי החברתי');}
+  return R;}
+
+/* ---------------- COMPLETENESS ---------------- */
+const CHECKS=[
+ {s:'project',l:'שם המתחם',ok:()=>has(S.meta.name)},{s:'project',l:'עיר',ok:()=>has(S.meta.city)},{s:'project',l:'מסלול',ok:()=>has(S.meta.track)},{s:'project',l:'ראש צוות התכנון',ok:()=>has(S.meta.planningHead)},{s:'project',l:'יועץ חברתי',ok:()=>has(S.meta.consultant)},
+ {s:'sources',l:'מקורות מוניציפליים',ok:()=>SRC_MUNI.every(([k])=>has(S.src.muni[k]))},{s:'sources',l:'לפחות סיור אחד',ok:()=>S.src.tours.some(x=>has(x.date))},{s:'sources',l:'ראיונות עם גורמי מפתח',ok:()=>S.src.interviews.some(x=>x.done==='כן')},
+ {s:'urban',l:'טבלת נתונים השוואתית',ok:()=>['hh','ses','rent','eld','kids'].every(k=>has(S.urban.cmp[k]?.city)&&has(S.urban.cmp[k]?.sa))},{s:'urban',l:'משפט מסכם על הא״ס',ok:()=>has(S.urban.summary)},{s:'urban',l:'מסמכי מדיניות',ok:()=>S.policy.length>0},{s:'urban',l:'מיזמי בנייה בסביבה',ok:()=>S.nearby.length>0},{s:'urban',l:'משמעות חברתית של המיזמים',ok:()=>has(S.nearbyMeaning)},
+ {s:'compound',l:'כתובות ויח״ד',ok:()=>S.buildings.length&&S.buildings.every(b=>n(b.units))},{s:'compound',l:'רמת תחזוקה לכל בניין',ok:()=>S.buildings.length&&S.buildings.every(b=>has(b.maint))},{s:'compound',l:'גבולות המתחם',ok:()=>has(S.compound.boundaries)},{s:'compound',l:'תפקוד המתחם במרחב',ok:()=>has(S.compound.role)},{s:'compound',l:'תמונות',ok:()=>S.photos.length>0},
+ {s:'housing',l:'זיקה לנכס לפי בניין',ok:()=>totals().tenSum>0},{s:'housing',l:'השוואה עירונית/ארצית',ok:()=>has(S.housing.cityOwn)&&has(S.housing.ilOwn)},{s:'housing',l:'תמהיל גודל יח״ד',ok:()=>MIX.some(m=>has(S.housing.mix[m.k]))},{s:'housing',l:'נטל עלות הדיור',ok:()=>ROOMS.some(r=>has(S.burden.rent[r.k]))&&has(S.burden.inc.d1)},
+ {s:'housing',l:'אפיון שוכרים (מעל 30%)',ok:()=>!(rentRate()>30)||has(S.housing.rentersText),full:1},{s:'housing',l:'הרחבת דיור ציבורי (מעל 10%)',ok:()=>!(phRate()>10)||has(S.housing.phText),full:1},
+ {s:'pop',l:'אוכלוסיות ייחודיות',ok:()=>has(S.pop.eld65)&&has(S.pop.disabled)&&has(S.pop.welfare)},{s:'pop',l:'אפיון האוכלוסייה',ok:()=>has(S.pop.text)},{s:'pop',l:'גורמים ודמויות מפתח',ok:()=>S.keyPeople.length>0},
+ {s:'pop',l:'ניתוח דמוגרפי וחברתי־תרבותי',ok:()=>has(S.popFull.demo)&&has(S.popFull.culture),full:1},{s:'pop',l:'מצב סוציו־אקונומי וחוסן',ok:()=>has(S.popFull.ses)&&has(S.popFull.resilience),full:1},
+ {s:'org',l:'שנת תחילה ומקור היוזמה',ok:()=>has(S.org.startYear)&&has(S.org.source)},{s:'org',l:'הסמכת נציגויות לפי בניין',ok:()=>S.buildings.length&&S.buildings.every(b=>has(b.repAuth))},{s:'org',l:'התקשרות לפי בניין',ok:()=>S.buildings.length&&S.buildings.every(b=>has(b.signed))},{s:'org',l:'ייצוג משפטי',ok:()=>has(S.org.legalOffices)},{s:'org',l:'פרטי החברה היזמית',ok:()=>has(S.org.devCompany)||S.org.agreement==='אין התקשרות'},{s:'org',l:'סטטוס מסמכים',ok:()=>['repLetters','poa','affidavit'].every(k=>has(S.org.docs[k]))},
+ {s:'org',l:'עמדות הדיירים',ok:()=>has(S.org.attitudes),full:1},
+ {s:'svc',l:'מוסדות ציבור',ok:()=>S.svc.inst.length>0},{s:'svc',l:'שטחים פתוחים',ok:()=>has(S.svc.openPublic)},{s:'svc',l:'תנועה והתניידות',ok:()=>has(S.svc.ptLevel)&&has(S.svc.walk)},
+ {s:'survey',l:'סקרים לפי היעד',ok:()=>{const st=sampleTarget();return st&&agg().N>=st.n},full:1},{s:'survey',l:'סיכום שיתוף הציבור',ok:()=>S.survey.participation.length>0,full:1},
+ {s:'concl',l:'טבלת מסקנות',ok:()=>S.concl.some(x=>has(x.finding))},{s:'concl',l:'טבלת המלצות',ok:()=>S.recs.some(x=>has(x.rec))},{s:'concl',l:'קריטריונים לבחינת חלופות',ok:()=>S.criteria.filter(has).length>=2},
+ {s:'alts',l:'טבלת הערכת חלופות',ok:()=>S.alts.rows.some(r=>has(r.a1)),alts:1},{s:'alts',l:'חוות דעת היועץ על החלופות',ok:()=>has(S.alts.opinion),alts:1},
+ {s:'gantt',l:'גאנט עבודה חברתית',ok:()=>S.gantt.some(g=>g.m&&g.m.some(Boolean))},{s:'gantt',l:'רציונל',ok:()=>has(S.ganttRationale)},
+ {s:'summary',l:'תקציר (עד 250 מילים)',ok:()=>has(S.summary)&&words(S.summary)<=250}
+];
+function relevantChecks(){const rt=S.meta.reportType;return CHECKS.filter(c=>rt==='הערכת חלופות'?(c.alts||['concl'].includes(c.s)&&c.l==='טבלת המלצות'):(!c.alts&&(!c.full||rt==='מלא')));}
+function stepScore(id){const c=relevantChecks().filter(x=>x.s===id);if(!c.length)return null;return c.filter(x=>x.ok()).length/c.length;}
+
+/* ---------------- NAV ---------------- */
+function renderNav(){let g='',h='';STEPS.forEach((s,i)=>{if(s.g!==g){g=s.g;h+=`<div class="grp">${g}</div>`;}const sc=stepScore(s.id);
+  h+=`<button class="${s.id===cur?'on':''}" data-go="${s.id}"><span class="num">${i+1}</span><span>${s.t}</span>${sc!=null?`<span class="bar"><i style="width:${Math.round(sc*100)}%"></i></span>`:''}</button>`;});$('#nav').innerHTML=h;}
+function renderProjSel(){const idx=index();$('#projSel').innerHTML=idx.map(p=>`<option value="${p.id}" ${p.id===S.id?'selected':''}>${esc(p.name)}</option>`).join('')||'<option>אין פרויקטים שמורים</option>';}
+let map=null;
+function go(id){cur=id;if(map){map.remove();map=null;}const i=STEPS.findIndex(s=>s.id===id),s=STEPS[i];
+  $('#main').innerHTML=`<div class="row" style="justify-content:space-between"><h2 class="stitle">${i+1}. ${s.t}</h2><span class="pill rt">תוצר: ${RT_LABEL[S.meta.reportType]||''}</span></div><p class="lead">${s.g}</p>${guideBox(id)}${VIEWS[id]()}
+  <div class="navbtns noprint">${i>0?`<button class="btn" data-go="${STEPS[i-1].id}">→ ${STEPS[i-1].t}</button>`:'<span></span>'}${i<STEPS.length-1?`<button class="btn pri" data-go="${STEPS[i+1].id}">${STEPS[i+1].t} ←</button>`:''}</div>`;
+  renderNav();if(AFTER[id])AFTER[id]();window.scrollTo(0,0);try{history.replaceState(null,'','#'+id)}catch(e){}}
+
+/* ---------------- VIEWS ---------------- */
+const VIEWS={},AFTER={};let VIEWS_PICKER=()=>'';
+VIEWS.project=()=>`${VIEWS_PICKER()}
+<div class="card"><h3>סוג התוצר</h3><div class="row">${RT.map(r=>`<label class="radio"><input type="radio" name="rt" value="${r}" ${S.meta.reportType===r?'checked':''}> ${RT_LABEL[r]}</label>`).join('')}</div>
+ <p class="small">${S.meta.reportType==='מצב קיים'?'מוגש 3–5 חודשים מתחילת עבודת היועץ, לפני דו״ח המצב הקיים של עורכי התכנית.':S.meta.reportType==='הערכת חלופות'?'מתכונת תקציר בשלב בחירת החלופה; מוגש לראש צוות התכנון ולמנהלת בלבד.':'התוצר הסופי – רצוי בשלב עיבוד החלופה המועדפת. כולל עדכון של כל פרקי המצב הקיים על בסיס הסקר.'}</p></div>
+<div class="card"><h3>שער הדו״ח</h3><div class="grid">
+ ${F('meta.name','שם המתחם','text',{ph:'מתחם ___'})}${F('meta.city','עיר')}${F('meta.neighborhood','שכונה')}${F('meta.statArea','אזור סטטיסטי (א״ס)','text',{ph:'מס׳ א״ס לפי הלמ״ס'})}
+ ${F('meta.track','מסלול','select',{opts:['מסלול רשויות','מסלול מיסוי']})}${F('meta.ptype','סוג המיזם','select',{opts:['פינוי־בינוי','עיבוי בינוי','התחדשות בניינית','תכנית כוללת']})}
+ ${F('meta.developer','יזם / הגוף הציבורי המוביל את התכנון')}${F('meta.planningHead','ראש צוות התכנון (משרד האדריכלים)')}${F('meta.pm','ניהול פרויקט')}
+ ${F('meta.consultant','ייעוץ חברתי (שם היועץ/ת)')}${F('meta.consultantOrg','חברה מגישה')}${F('meta.date','תאריך הגשה','date')}${F('meta.startedWork','תחילת עבודת היועץ','date',{hint:'דו״ח מצב קיים מוגש 3–5 חודשים לאחר מכן'})}
+</div>${dueHint()}</div>
+<div class="card" style="border-color:#c9792b"><h3>⚡ איך מתחילים</h3><p style="margin:0">מלאו עיר ומסלול, עברו לשלב 4 והזינו את כתובות המתחם (אפשר להדביק רשימה), ולחצו <b>"מילוי אוטומטי ממקורות פתוחים"</b>. הכלי ימשוך נתונים מהלמ״ס, ממאגר מתחמי ההתחדשות, ממינהל התכנון, ממשרדי החינוך והתחבורה ומ־OpenStreetMap, וימלא את השדות הריקים.</p></div>
+<div class="card"><h3>📄 המדריך</h3><p class="small" style="margin-top:0">הכלי בנוי לפי <b>גרסה 3.0</b> (2026): המסמך המלווה, תבנית הבסיס לדו״ח מצב קיים ותבנית הדו״ח המלא כולל הערכת חלופות.</p>
+ <ul>${GUIDE_LINKS.map(l=>`<li><a href="${l.u}" target="_blank" rel="noopener">${l.t}</a> <span class="pill">${l.d}</span></li>`).join('')}</ul></div>`;
+function dueHint(){const d=S.meta.startedWork;if(!d)return'';const s=new Date(d);const a=new Date(s);a.setMonth(a.getMonth()+3);const b=new Date(s);b.setMonth(b.getMonth()+5);return `<div class="note info">חלון הגשת דו״ח מצב קיים: ${a.toLocaleDateString('he-IL')} – ${b.toLocaleDateString('he-IL')}</div>`;}
+
+VIEWS.sources=()=>{const sel=(p,opts)=>cellIn(p,getP(p),{opts});return `
+<div class="grid2">
+<div class="card"><h3>מקורות מוניציפליים</h3><table class="t"><tr><th>המקור</th><th>האם נעשה שימוש</th></tr>${SRC_MUNI.map(([k,l])=>`<tr><td>${l}</td><td>${sel('src.muni.'+k,OPT_USED)}</td></tr>`).join('')}</table></div>
+<div class="card"><h3>התארגנות, התקשרות וייצוג משפטי</h3><table class="t"><tr><th>המקור</th><th>האם נעשה שימוש</th></tr>${SRC_DOCS.map(([k,l])=>`<tr><td>${l}</td><td>${sel('src.docs.'+k,OPT_DOC)}</td></tr>`).join('')}</table></div>
+<div class="card"><h3>מידע תכנוני וקנייני</h3><table class="t"><tr><th>המקור</th><th>האם נעשה שימוש</th></tr><tr><td>נסחי טאבו</td><td>${sel('src.tabu',YN)}</td></tr>${SRC_POLICY.map(([k,l])=>`<tr><td>${l}</td><td>${sel('src.policy.'+k,OPT_POL)}</td></tr>`).join('')}</table></div>
+<div class="card"><h3>מקורות סטטיסטיים</h3>${F('src.cbs','קבצי הלמ״ס שנעשה בהם שימוש','textarea',{ph:'הלמ״ס – מפקד אוכלוסין 2022 (קובץ…); אפיון יחידות גאוגרפיות לפי רמה חברתית־כלכלית 2021…',rows:3})}${F('src.other','מקורות נוספים','textarea',{rows:2})}</div>
+</div>
+<div class="card"><h3>סיורים ותצפיות בשכונה <span class="pill">חובה – לפחות סיור אחד</span></h3>${listTable('src.tours',[{k:'date',l:'תאריך',ph:'dd/mm/yyyy'},{k:'time',l:'שעה'},{k:'notes',l:'עיקרי התצפית'}],{addL:'סיור'})}</div>
+<div class="card"><h3>ראיונות עם גורמים קהילתיים ודמויות מפתח</h3>${listTable('src.interviews',[{k:'role',l:'תפקיד'},{k:'name',l:'שם'},{k:'done',l:'בוצעה שיחה',opts:YN}],{addL:'ראיון'})}</div>
+<div class="card"><h3>חיפוש במאגרי data.gov.il</h3>
+ <p class="small" style="margin:0 0 8px">חיפוש חי במאגר הממשלתי הפתוח. אפשר לייבא שורות כמיזם בסביבה או להוסיף את המאגר לרשימת המקורות.</p>
+ <div class="row noprint"><input id="ckQ" placeholder="מילות חיפוש" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:7px 9px" value="התחדשות עירונית"><button class="btn pri" id="ckGo">חיפוש</button></div>
+ <div class="row noprint" style="margin-top:8px">${['התחדשות עירונית','מתחמי פינוי בינוי','דיור ציבורי','מדד חברתי כלכלי','אזורים סטטיסטיים','מפקד אוכלוסין','גני ילדים','מוסדות חינוך','תחנות אוטובוס','היתרי בנייה'].map(q=>`<button class="btn sm" data-ckq="${q}">${q}</button>`).join('')}</div>
+ <div id="ckOut" style="margin-top:12px"></div>
+ <h4>מקורות נוספים שנאספו</h4>${listTable('src.extra',[{k:'title',l:'מקור'},{k:'url',l:'קישור'},{k:'note',l:'הערה'}],{addL:'מקור'})}
+ <p class="small"><a href="https://www.cbs.gov.il/he/Pages/default.aspx" target="_blank" rel="noopener">הלמ״ס</a> · <a href="https://www.govmap.gov.il" target="_blank" rel="noopener">GovMap – שכבת אזורים סטטיסטיים</a> · <a href="https://mavat.iplan.gov.il/SV3" target="_blank" rel="noopener">מינהל התכנון – מידע תכנוני</a> · <a href="https://www.gov.il/he/service/land_registration_extract" target="_blank" rel="noopener">נסח טאבו</a></p>
+</div>`;};
+
+VIEWS.urban=()=>`
+<div class="card"><h3>נתונים חברתיים במבט השוואתי</h3>
+ <p class="small" style="margin-top:0">מקורות: הלמ״ס – מפקד 2022; אפיון יחידות גאוגרפיות לפי רמה חברתית־כלכלית; GovMap – שכבת א״ס. עמודת המתחם: בדו״ח מצב קיים – הערכה (מספר או גבוה/נמוך/ממוצע); בדו״ח המלא – מהסקר.</p>
+ <div class="scroll" style="max-height:none"><table class="t"><thead><tr><th>נושא</th>${CMP_COLS.map(c=>`<th>${c.l}</th>`).join('')}</tr></thead><tbody>
+ ${CMP.map(r=>`<tr><td>${r.custom?cellIn(`urban.cmp.${r.k}.label`,S.urban.cmp[r.k]?.label,{ph:'קטגוריה נוספת (למשל דת עיקרית)'}):r.l}</td>${CMP_COLS.map(c=>`<td>${cellIn(`urban.cmp.${r.k}.${c.k}`,S.urban.cmp[r.k]?.[c.k],{w:110,ph:c.k==='cmp'?autoCmp(r.k)??'':''})}</td>`).join('')}</tr>`).join('')}
+ </tbody></table></div>
+ <div class="row noprint" style="margin-top:6px"><button class="btn sm" id="fillCmp">↳ מילוי עמודת המתחם מנתוני הכלי</button></div>
+ <div class="grid" style="margin-top:10px">${F('urban.summary','משפט מסכם – הרכב האוכלוסייה בא״ס בהשוואה לעיר ולארץ','textarea')}${F('urban.overlap','מידת החפיפה בין השכונה (שמה ותפקודה), המתחם והאזור הסטטיסטי','textarea')}</div>
+</div>
+<div class="card"><h3>סוגיות חברתיות במסמכי מדיניות ותכניות מתאר</h3>
+ ${listTable('policy',[{k:'name',l:'שם המסמך'},{k:'scale',l:'קנה מידה',opts:['ארצי','מחוזי','עירוני','שכונתי']},{k:'year',l:'שנת פרסום',w:70},{k:'info',l:'מידע רלוונטי',area:1},{k:'concl',l:'מסקנות',area:1}],{addL:'מסמך',noMax:1})}
+ <p class="small">לדוגמה: תכנית מתאר כוללנית (תמהיל, דב״י), מדיניות תמהיל/דיור מכליל, מדיניות תחזוקה וקרן תחזוקה, מדיניות התחדשות עירונית, תמ״א 70, מדיניות צירי מתע״ן.</p>
+</div>
+<div class="card"><h3>מיזמי בנייה בסביבת המתחם ואוכלוסייה עתידית</h3>
+ ${listTable('nearby',[{k:'name',l:'שם המיזם'},{k:'kind',l:'סוג',opts:['התחדשות עירונית','בנייה חדשה']},{k:'status',l:'סטטוס',opts:['תכנון','בנייה','אכלוס']},{k:'units',l:'יח״ד',num:1,w:70},{k:'track',l:'מסלול',opts:['רשויות','מיסוי','—']},{k:'developer',l:'יזם'},{k:'dist',l:'מרחק',w:70}],{addL:'מיזם'})}
+ <p class="small">מומלץ להתמקד במיזמים בשלב תכנון/ביצוע מתקדם, שמוסיפים יח״ד או שטחי ציבור משמעותיים או נמצאים בשכונה.</p>
+ <div class="grid">${F('nearbyMeaning','המשמעויות החברתיות של המיזמים (למשל גריעת מלאי שכירות, היצע לתקופת השכירות הזמנית)','textarea')}
+ ${F('futurePop','מאפייני האוכלוסייה במיזמי בנייה חדשים (מקרה בוחן) והאוכלוסייה העתידית הצפויה','textarea',{ph:'משפחות צעירות / משפרי דיור / מצמצמי דיור…'})}${F('nearbyConcl','מסקנות חברתיות בנוגע למיזמי הבנייה','textarea')}</div>
+</div>`;
+function autoCmp(k){const t=totals(),P=S.pop,a=agg();
+  if(k==='hh')return a.hhAvg??(n(P.residents)&&n(P.households)?Math.round(P.residents/P.households*10)/10:null);
+  if(k==='rent')return rentRate();if(k==='eld')return pct(P.eld65,P.residents)??(a.persons?pct(a.p65,a.persons):null);if(k==='kids')return a.persons?pct(a.pKids,a.persons):null;return null;}
+
+VIEWS.compound=()=>{const t=totals();return `
+<div class="card"><h3>הקו הכחול – בנייני המתחם</h3>
+ <p class="small" style="margin:0 0 8px">בניין בכל שורה. "איתור במפה" ממקם אוטומטית (OpenStreetMap); אפשר גם לבחור בניין ולהקליק על המפה.</p>
+ <div class="row noprint" style="margin-bottom:8px"><button class="btn" id="addB">+ בניין</button><button class="btn" id="bulkB">+ הדבקת רשימה</button><button class="btn" id="geoB">📍 איתור הכתובות במפה</button><button class="btn pri" id="autoFill">⚡ מילוי אוטומטי ממקורות פתוחים</button><span id="geoMsg" class="small"></span></div>
+ <div class="scroll"><table class="t"><thead><tr><th>#</th><th>רחוב</th><th>מס׳</th><th>גוש/חלקה</th><th>יח״ד</th><th>מסחר/תעסוקה</th><th>קומות</th><th>שנת בנייה</th><th>סוג מבנה</th><th>תחזוקה 1–5</th><th>יח״ד לא טיפוסיות</th><th>פירוט</th><th>מיקום</th><th></th></tr></thead><tbody>
+ ${S.buildings.map((b,i)=>`<tr><td><input type="radio" name="selb" data-selb="${i}" ${i===selB?'checked':''}></td>
+  <td>${cellIn(`buildings.${i}.street`,b.street)}</td><td>${cellIn(`buildings.${i}.num`,b.num,{w:50})}</td><td>${cellIn(`buildings.${i}.parcel`,b.parcel,{w:80})}</td>
+  <td>${cellIn(`buildings.${i}.units`,b.units,{num:1,w:55})}</td><td>${cellIn(`buildings.${i}.commercial`,b.commercial,{num:1,w:55})}</td><td>${cellIn(`buildings.${i}.floors`,b.floors,{num:1,w:50})}</td><td>${cellIn(`buildings.${i}.year`,b.year,{num:1,w:65})}</td>
+  <td>${cellIn(`buildings.${i}.btype`,b.btype,{opts:['שיכון','בניין על עמודים','בית משותף','גן־גג','בניין גבוה','צמוד קרקע','אחר']})}</td><td>${cellIn(`buildings.${i}.maint`,b.maint,{opts:S5})}</td>
+  <td>${cellIn(`buildings.${i}.atypical`,b.atypical,{num:1,w:55})}</td><td>${cellIn(`buildings.${i}.atypNote`,b.atypNote,{ph:'הרחבה, פיצול, סיפוח…'})}</td>
+  <td>${b.lat?'<span class="pill ok">✓</span>':`<span class="pill bad">${b.geoErr?'לא נמצא':'—'}</span>`}</td><td><button class="btn ghost sm" data-del="buildings" data-i="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="14" class="small">עדיין לא הוזנו בניינים</td></tr>'}
+ </tbody></table></div>
+ <div class="kpis" style="margin-top:12px"><div class="kpi"><b>${t.nb}</b><span>מבנים (${t.shared} משותפים)</span></div><div class="kpi"><b>${fmtN(t.units)}</b><span>יחידות דיור</span></div><div class="kpi"><b>${fmtN(t.com)}</b><span>יחידות מסחר/תעסוקה</span></div><div class="kpi"><b>${fmtN(t.all)}</b><span>סך יחידות קנייניות</span></div><div class="kpi"><b>${fmtN(t.atyp)}</b><span>יח״ד לא טיפוסיות</span></div><div class="kpi"><b>${t.shared>10?'מקבצים':'לכל בניין'}</b><span>כרטיסיות בניינים</span></div></div>
+ <div id="map" class="map" style="margin-top:12px"></div></div>
+<div class="card"><h3>רקע</h3><div class="grid">
+ ${F('compound.boundaries','גבולות המתחם / הקו הכחול','textarea')}${F('compound.btypes','סוג המבנים (שיכונים, גן־גג, צמודי קרקע)','textarea',{rows:2})}
+ ${F('compound.role','תפקוד המתחם ותפקידו במרחב השכונתי והעירוני','textarea',{ph:'שירותי ציבור/מסחר, מלאי דירות זול, נקודת חיבור…'})}${F('compound.history','היסטוריה: בנייה, אכלוס ושינויים','textarea')}${F('compound.physical','מצב פיזי ותחזוקה (סיור)','textarea')}
+</div></div>
+<div class="card"><h3>תמונות</h3><div class="row noprint" style="margin-bottom:10px"><label class="btn">📷 הוספת תמונות<input type="file" id="photoIn" accept="image/*" multiple hidden></label><span class="small">לשייך תמונה לבניין כדי שתופיע בכרטיסיית הבניין</span></div>
+ <div class="photos">${S.photos.map((p,i)=>`<figure><img src="${p.data}" alt=""><input data-p="photos.${i}.caption" value="${esc(p.caption)}" placeholder="כיתוב"><select data-p="photos.${i}.bld" style="width:100%;font-size:12px;margin-top:3px"><option value="">כללי</option>${S.buildings.map(b=>`<option ${p.bld===bName(b)?'selected':''}>${esc(bName(b))}</option>`).join('')}</select><button class="btn ghost sm" data-del="photos" data-i="${i}">הסרה</button></figure>`).join('')}</div></div>`;};
+let selB=0;AFTER.compound=()=>drawMap(true);AFTER.project=()=>initPicker();
+
+VIEWS.housing=()=>{const t=totals(),H=S.housing,B=S.burden;const base=tenBase();
+ const rr=rentRate(),pr=phRate();
+ const brTable=(kind,future)=>{const rows=burdenRows(kind,future);const inc=incomes();const src=kind==='rent'?(future?'rentNew':'rent'):(future?'priceNew':'price');
+  return `<table class="t"><thead><tr><th>חדרים</th><th>${kind==='rent'?'שכירות ממוצעת (₪)':'מחיר דירה טיפוסית (₪)'}</th>${kind==='buy'?'<th>הון עצמי 25%</th><th>החזר חודשי</th>':''}${inc.map(i=>`<th>${i.l}</th>`).join('')}</tr></thead><tbody>
+  ${rows.map((r,j)=>`<tr><td>${r.l}</td><td>${cellIn(`burden.${src}.${ROOMS[j].k}`,S.burden[src][ROOMS[j].k],{num:1,w:95,ph:'לפי שמאי'})}</td>${kind==='buy'?`<td>${fmtNIS(r.equity)}</td><td>${fmtNIS(r.monthly)}</td>`:''}${r.ratios.map(p=>`<td class="${burdenClass(p)}">${p==null?'—':p+'% '+burdenLabel(p)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;};
+ return `
+<div class="card"><h3>זיקה לנכס לפי בניין</h3><p class="small" style="margin-top:0">מקורות: נתוני ארנונה, נסחי טאבו, החברה המשכנת. התפלגות זו קובעת את יעד הראיונות לכל קבוצה בסקר.</p>
+ <div class="scroll"><table class="t"><thead><tr><th>בניין</th><th>יח״ד</th>${TENURE.map(g=>`<th>${g.l}</th>`).join('')}<th>סה״כ</th></tr></thead><tbody>
+ ${S.buildings.map((b,i)=>{const s=TENURE.reduce((x,g)=>x+(n(b[g.k])||0),0);return `<tr><td>${esc(bName(b))}</td><td>${fmtN(b.units)}</td>${TENURE.map(g=>`<td>${cellIn(`buildings.${i}.${g.k}`,b[g.k],{num:1,w:60})}</td>`).join('')}<td>${s}${n(b.units)&&s!==n(b.units)+(n(b.commercial)||0)?' <span class="pill bad" title="הסכום שונה מסך היחידות">≠</span>':''}</td></tr>`}).join('')||'<tr><td colspan="8" class="small">הזינו בניינים בשלב 4</td></tr>'}
+ ${S.buildings.length?`<tr><th>סה״כ</th><th>${fmtN(t.units)}</th>${TENURE.map(g=>`<th>${t.ten[g.k]} (${fmtPct(pct(t.ten[g.k],base))})</th>`).join('')}<th>${t.tenSum}</th></tr>`:''}</tbody></table></div>
+ <div class="grid" style="margin-top:10px">${F('housing.cityOwn','שיעור בעלות – עירוני (%)','num')}${F('housing.ilOwn','שיעור בעלות – ארצי (%)','num')}${F('housing.cityRent','שיעור שכירות – עירוני (%)','num')}${F('housing.ilRent','שיעור שכירות – ארצי (%)','num')}</div>
+ <div class="kpis" style="margin-top:10px"><div class="kpi"><b>${fmtPct(ownRate())}</b><span>בעלות (מתגוררים) במתחם</span></div><div class="kpi ${rr>30?'w':''}"><b>${fmtPct(rr)}</b><span>שכירות ${rr>30?'– מעל 30%: נדרש אפיון בדו״ח המלא':''}</span></div><div class="kpi ${pr>10?'w':''}"><b>${fmtPct(pr)}</b><span>דיור ציבורי ${pr>10?'– מעל 10%: נדרשת הרחבה':''}</span></div></div>
+</div>
+<div class="card"><h3>תמהיל דיור קיים</h3><p class="small" style="margin-top:0">על בסיס ניתוח האדריכלים / ארנונה. מקור להמלצה: הנחיית מינהל התכנון לתמהיל יח״ד.</p>
+ <table class="t"><thead><tr><th>גודל</th><th>מספר יח״ד</th><th>שיעור בפועל</th><th>שיעור מומלץ ע״י מינהל התכנון (%)</th></tr></thead><tbody>
+ ${MIX.map(m=>{const tot=MIX.reduce((s,x)=>s+(n(H.mix[x.k])||0),0);return `<tr><td>${m.l}</td><td>${cellIn('housing.mix.'+m.k,H.mix[m.k],{num:1,w:80})}</td><td>${fmtPct(pct(H.mix[m.k],tot))}</td><td>${cellIn('housing.mixRec.'+m.k,H.mixRec[m.k],{num:1,w:80})}</td></tr>`}).join('')}</tbody></table>
+ <div class="grid" style="margin-top:10px">${F('housing.mixNotes','ניתוח ותובנות על התמהיל (כולל פערים בין נתונים רשמיים למצב בפועל, יחס לגודל משקי הבית)','textarea')}${F('housing.inclusive','יח״ד העונות להגדרת דיור מכליל (דירות קטנות, מעונות, דיור מוגן)','textarea',{rows:2})}</div>
+</div>
+<div class="card"><h3>דיור ציבורי</h3><div class="grid">${F('housing.phCompany','החברה המנהלת','select',{opts:['עמידר','עמיגור','חלמיש','פרזות','שקמונה','חברה עירונית אחרת']})}${F('housing.phCityShare','שיעור מתוך מאגר הדיור הציבורי בעיר (%)','num')}${F('housing.phSizes','טווח גודל הדירות','text',{ph:'מ־X עד Y מ״ר'})}
+ ${F('housing.phText','הרחבה (חובה בדו״ח מלא כשמעל 10%): גודל הדירות, מלאי העיר, פעולות יידוע והתקשרות היזם עם החברה המשכנת','textarea',{full:1})}</div></div>
+<div class="card"><h3>אפיון שוכרים ושוק השכירות <span class="pill">דו״ח מלא, מעל 30% שכירות</span></h3>${F('housing.rentersText','אוכלוסיית השוכרים והמשכירים, שוק השכירות במתחם ובסביבה','textarea',{ph:'מקורות: הסקר החברתי, ראיונות עם מתווכים, ארנונה, מדיניות דיור עירונית'})}</div>
+<div class="card"><h3>נטל עלות הדיור</h3>
+ <p class="small" style="margin-top:0">שכירות ומחירים – מנתוני שמאי התכנית. הכנסות נטו – הלמ״ס, "הכנסה והוצאה חודשית לתצרוכת" לפי עשירון וצורת יישוב. החזר משכנתא מחושב ל־75% מימון.</p>
+ <div class="grid">${F('burden.inc.d1L','עשירון א׳','text')}${F('burden.inc.d1','הכנסה נטו – עשירון א׳ (₪)','num')}${F('burden.inc.d2L','עשירון ב׳','text')}${F('burden.inc.d2','הכנסה נטו – עשירון ב׳ (₪)','num')}${F('burden.inc.city','הכנסה נטו ממוצעת – עיר (₪)','num')}${F('burden.inc.il','הכנסה נטו ממוצעת – ישראל (₪)','num')}
+ ${F('burden.rate','ריבית משכנתא לחישוב (%)','num',{hint:'הנחת עבודה – לאמת מול השמאי'})}${F('burden.years','תקופת משכנתא (שנים)','num')}</div>
+ <div class="legend small"><span class="b-ok">עד 25% – סביר</span> <span class="b-mid">25–35% – בינוני</span> <span class="b-high">מעל 35% – גבוה</span></div>
+ <h4>מצב קיים – דירות יד שנייה · שכירות</h4>${brTable('rent',false)}<h4>מצב קיים · רכישה</h4>${brTable('buy',false)}
+ <h4>מצב עתידי – דירות חדשות באזור · שכירות</h4>${brTable('rent',true)}<h4>מצב עתידי · רכישה</h4>${brTable('buy',true)}
+ ${F('burden.concl','מסקנות מרכזיות – נטל עלות הדיור הקיים והצפוי לרמות הכנסה שונות','textarea')}
+</div>`;};
+
+VIEWS.pop=()=>{const t=totals(),P=S.pop;const sh=(v,b)=>{const p=pct(v,b);return p!=null?`<b>${p}%</b>`:''};return `
+<div class="card"><h3>אוכלוסיות ייחודיות במתחם</h3><p class="small" style="margin-top:0">מקורות: נסחי טאבו, ארנונה, אגף הרווחה, החברה המשכנת, עו״ס שכונתי, ראיונות.</p><div class="grid">
+ ${F('pop.households','משקי בית','num')}${F('pop.residents','תושבים','num')}
+ ${F('pop.eld65','אזרחים ותיקים (65+)','num',{hint:sh(P.eld65,P.residents)+' מהתושבים'})}${F('pop.eld70','מהם בני 70+ (לצורך תמורות)','num')}
+ ${F('pop.disabled','דיירים עם מוגבלויות','num',{hint:sh(P.disabled,P.residents)})}${F('pop.welfare','משקי בית נתמכי רווחה','num',{hint:sh(P.welfare,P.households||t.units)})}
+ ${F('pop.phHH','משקי בית בדיור הציבורי','num',{hint:t.ten.ph?`מנתוני הזיקה לנכס: ${t.ten.ph} דירות`:''})}
+</div></div>
+<div class="card"><h3>אפיון אוכלוסיית המתחם</h3><div class="grid">${F('pop.text','מגמות ומאפיינים: הרכב משקי בית, מצב סוציו־אקונומי, ילידי חו״ל (כמותני ואיכותני)','textarea',{rows:5})}${F('pop.history','היסטוריה חברתית: שינויים לאורך זמן, הגירה, מתחים, קונפליקטים מול העירייה','textarea')}</div></div>
+<div class="card"><h3>גורמים ודמויות מפתח בקהילה</h3>${listTable('keyPeople',[{k:'kind',l:'גורם',opts:['אגף הרווחה העירוני','ועד שכונתי','קבוצת פייסבוק/וואטסאפ שכונתית','מנהל מתנ״ס','גבאי בית כנסת','דמות קהילתית אחרת']},{k:'name',l:'שם אחראי'},{k:'role',l:'תפקיד'},{k:'relation',l:'זיקה למתחם'}],{addL:'גורם'})}</div>
+<div class="card"><h3>הרחבות לדו״ח המלא <span class="pill">מבוסס על הסקר</span></h3>${popFullKpis()}<div class="grid">
+ ${F('popFull.demo','ניתוח דמוגרפי – גודל משק בית, משקי בית קטנים/גדולים/רב־דוריים, התפלגות גילאים והסיבות','textarea',{full:1})}
+ ${F('popFull.culture','אפיון חברתי־תרבותי – דת, זיקה לדת, קהילות, ילידי חו״ל, תרגום','textarea',{full:1})}
+ ${F('popFull.ses','מצב סוציו־אקונומי – הכנסה לפי זיקה לנכס, מידע איכותני, חוו״ד הרווחה','textarea',{full:1})}
+ ${F('popFull.resilience','חוסן וקשרים קהילתיים – יחסי שכנות, שייכות, מעורבות','textarea',{full:1})}
+</div><div class="row noprint"><button class="btn sm" data-autopop="1">✎ טיוטה מנתוני הסקר</button></div></div>`;};
+function popFullKpis(){const a=agg();if(!a.N)return'<p class="small">הנתונים יחושבו אוטומטית כשיוזנו תשובות הסקר (שלב 9).</p>';
+ return `<div class="kpis" style="margin-bottom:10px"><div class="kpi"><b>${a.hhAvg??'—'}</b><span>גודל משק בית ממוצע</span></div><div class="kpi"><b>${fmtPct(pct(a.hhSmall,a.hhN))}</b><span>משקי בית קטנים (1–2)</span></div><div class="kpi"><b>${fmtPct(pct(a.hhLarge,a.hhN))}</b><span>גדולים (6+)</span></div><div class="kpi"><b>${fmtPct(pct(a.p65,a.persons))}</b><span>בני 65+ מהנפשות</span></div><div class="kpi"><b>${fmtPct(pct(a.pKids,a.persons))}</b><span>ילדים</span></div><div class="kpi"><b>${fmtPct(pct(a.abroad,a.N))}</b><span>משקי בית עם ילידי חו״ל</span></div><div class="kpi"><b>${a.neigh??'—'}/5</b><span>קשר עם שכנים</span></div><div class="kpi"><b>${a.belong??'—'}/5</b><span>שייכות לשכונה</span></div></div>`;}
+
+VIEWS.org=()=>{const t=totals(),O=S.org;return `
+<div class="card"><h3>תיאור תהליך ההתארגנות</h3><div class="grid">${F('org.startYear','שנת תחילת קידום ההתחדשות','num')}${F('org.source','מקור היוזמה','select',{opts:['בעלי דירות','עו״ד','מארגן דיירים','חברה יזמית','גורם ציבורי']})}${F('org.process','פירוט התהליך','textarea')}</div></div>
+<div class="card"><h3>סטטוס התארגנות והתקשרות ברמת הבניין</h3>
+ <div class="scroll"><table class="t"><thead><tr><th>כתובת</th><th>יח״ד</th><th>ד. ציבורי</th><th>כתב הסמכה</th><th>שיעור הסמכה %</th><th>שנת הסמכה</th><th>גורם שסייע</th><th>משרד עו״ד</th><th>ייפוי כוח</th><th>מס׳ חתימות</th><th>% חתימות</th><th>חתימה ראשונה</th><th>התרשמות היועץ מהנציגות</th></tr></thead><tbody>
+ ${S.buildings.map((b,i)=>{const p=pct(b.signed,b.units);return `<tr><td>${esc(bName(b))}</td><td>${fmtN(b.units)}</td><td>${fmtN(b.ph)}</td><td>${cellIn(`buildings.${i}.repAuth`,b.repAuth,{opts:['כן','לא','חלקי']})}</td><td>${cellIn(`buildings.${i}.repRate`,b.repRate,{num:1,w:60})}</td><td>${cellIn(`buildings.${i}.repYear`,b.repYear,{num:1,w:65})}</td><td>${cellIn(`buildings.${i}.repHelper`,b.repHelper)}</td><td>${cellIn(`buildings.${i}.lawyer`,b.lawyer)}</td><td>${cellIn(`buildings.${i}.poa`,b.poa,{opts:['יש','אין']})}</td><td>${cellIn(`buildings.${i}.signed`,b.signed,{num:1,w:60})}</td><td>${p!=null?`<span class="pill ${p>=66?'ok':p<40?'bad':''}">${p}%</span>`:'—'}</td><td>${cellIn(`buildings.${i}.firstSign`,b.firstSign,{w:95,ph:'mm/yyyy'})}</td><td>${cellIn(`buildings.${i}.repImpr`,b.repImpr)}</td></tr>`}).join('')||'<tr><td colspan="13" class="small">הזינו בניינים בשלב 4</td></tr>'}
+ ${S.buildings.length?`<tr><th>סה״כ</th><th>${fmtN(t.units)}</th><th>${fmtN(t.ten.ph)}</th><th colspan="6"></th><th>${fmtN(t.signed)}</th><th>${fmtPct(t.signPct)}</th><th colspan="2"></th></tr>`:''}</tbody></table></div>
+ <p class="small">הרוב הדרוש (חוק פינוי ובינוי): ⅔ מהדירות במקבץ ו־⅗ בכל בית משותף.</p>
+ ${F('org.repNotes','נציגויות – טיב ההיכרות ושביעות רצון בעלי הדירות מפעילותן','textarea')}</div>
+<div class="card"><h3>ייצוג משפטי</h3><div class="grid">${F('org.legalOffices','משרד/י עו״ד דיירים')}${F('org.legalHow','אופן בחירת עורך הדין','textarea',{rows:2})}${F('org.legalImpr','התרשמות מטיב הפעילות, היכרות ושביעות רצון הדיירים','textarea',{rows:2})}</div></div>
+<div class="card"><h3>פעילות יזמית</h3><div class="grid">${F('org.devCompany','החברה היזמית')}${F('org.agreement','אופי ההסכם','select',{opts:['נון־שופ','הסכם סופי','שילוב','אין התקשרות']})}${F('org.complaint','הוגשה קובלנה נגד היזם?','select',{opts:YN})}${F('org.devEntry','שנת כניסה למתחם','num')}
+ ${F('org.devMeetings','כנסים ונקודות ציון מול התושבים','textarea',{rows:2})}${F('org.devImpr','התרשמות מטיב פעילות החברה היזמית ועמדות כלפיה','textarea',{rows:2})}</div>
+ <h4>היבטים חברתיים וכלכליים בחוזה הסופי (אם נחתם)</h4><table class="t"><thead><tr><th style="width:24%">נושא</th><th>פירוט בהסכם</th></tr></thead><tbody>
+ ${[['fund','קרן תחזוקה וקרן שבר','גובה, משך, תחזוקה ארוכת טווח'],['rent','שכירות זמנית','גובה שכ״ד מובטח, תנאים, סיוע באריזה והובלה'],['comp','תמורות','גובה התמורות'],['senior','תמורות חלופיות לאזרחים ותיקים','האם הוצעו החלופות הנדרשות בחוק ואילו'],['extra','ליווי נוסף','סיוע וליווי נוסף שהוצע']].map(([k,l,ph])=>`<tr><td>${l}</td><td>${cellIn('org.contract.'+k,O.contract[k],{ph})}</td></tr>`).join('')}</tbody></table></div>
+<div class="card"><h3>סטטוס קבלת מסמכים וציר זמן</h3><div class="grid">
+ ${[['repLetters','כתבי הסמכת נציגויות'],['poa','ייפויי כוח לייצוג משפטי'],['affidavit','תצהיר עו״ד בדבר אחוז ההתקשרות'],['approval','אישור נציגות לשילוב היזם בהליך התכנון']].map(([k,l])=>F('org.docs.'+k,l,'select',{opts:['כן','לא','חלקי','לא רלוונטי']})).join('')}
+ ${F('org.timeline.rep','תאריך הקמת נציגות')}${F('org.timeline.lawyer','תאריך בחירת עו״ד')}${F('org.timeline.dev','תאריך בחירת יזם')}${F('org.timeline.firstSign','תאריך חתימה ראשון')}${F('org.timeline.meetings','כנסים ותאריכים נוספים','textarea',{rows:2})}
+ ${F('org.summary','אמירה רוחבית – התרשמות היועץ מתהליך ההתארגנות וההתקשרות','textarea')}</div><p class="small">⚠ יש לצרף צילומי המסמכים כנספחים.</p></div>
+<div class="card"><h3>עמדות הדיירים ביחס למיזם <span class="pill">דו״ח מלא</span></h3>${attKpis()}
+ ${F('org.attitudes','אמון ורצון במימוש, סיבות להתנגדות וחששות (ומאפייני המתנגדים), סוגיות שמשפיעות על מוטיבציה, סכסוכים, עמדות בעלי עסקים','textarea',{rows:5,full:1})}</div>`;};
+function attKpis(){const a=agg();if(!a.N)return'';return `<div class="kpis" style="margin-bottom:8px">${ATT.map(x=>`<div class="kpi"><b>${fmtPct(pct(a.att[x],a.N))}</b><span>${x}</span></div>`).join('')}<div class="kpi"><b>${a.repSat??'—'}</b><span>שביעות רצון מהנציגות</span></div><div class="kpi"><b>${a.lawyerSat??'—'}</b><span>מעו״ד</span></div><div class="kpi"><b>${a.devSat??'—'}</b><span>מהיזם</span></div></div>`;}
+
+VIEWS.svc=()=>{const sm=S.env.summary||{},c=S.env.center;return `
+<div class="card"><h3>מיפוי שירותים בטווחי הליכה</h3>
+ <p class="small" style="margin:0 0 8px">חיפוש סביב מרכז המתחם (OpenStreetMap) וחישוב <b>מרחק הליכה ברשת הרחובות</b>. סף הבית = עד 7 דקות הליכה (≈560 מ׳). משלים את מיפוי יועצי הפרוגרמה – לא מחליף אותו.</p>
+ <div class="row noprint"><label class="small">רדיוס (מ׳) <input type="number" id="radius" value="${S.env.radius||1000}" style="width:80px;border:1px solid var(--line);border-radius:6px;padding:4px"></label><button class="btn pri" id="fetchEnv" ${S.buildings.some(b=>b.lat)?'':'disabled'}>🔎 מיפוי השירותים</button>${S.env.fetchedAt?'<button class="btn" id="instFill">↳ העברת מוסדות ציבור לטבלה</button>':''}<span id="envMsg" class="small"></span></div>
+ ${!S.buildings.some(b=>b.lat)?'<div class="note warn">יש לאתר תחילה את הכתובות במפה (שלב 4).</div>':''}
+ ${c?`<div class="row" style="margin:8px 0"><a class="btn sm" target="_blank" rel="noopener" href="https://www.govmap.gov.il/?q=${encodeURIComponent(bName(S.buildings[0]||{})+' '+(S.meta.city||''))}">GovMap</a><a class="btn sm" target="_blank" rel="noopener" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${c[0]},${c[1]}">Street View</a><a class="btn sm" target="_blank" rel="noopener" href="https://www.openstreetmap.org/#map=17/${c[0]}/${c[1]}">OSM</a></div>`:''}
+ ${S.env.fetchedAt?svcTableHtml(true):''}<div id="map" class="map" style="margin-top:10px"></div></div>
+<div class="card"><h3>מוסדות ציבור – מצב קיים</h3>${listTable('svc.inst',[{k:'name',l:'סוג ושם השירות'},{k:'addr',l:'כתובת'},{k:'alt',l:'נדרש מענה חלופי בתקופת הבנייה',opts:YN},{k:'notes',l:'הערות (שימוש, צרכים)'}],{addL:'מוסד'})}</div>
+<div class="card"><h3>מסחר ושטחים פתוחים</h3><div class="grid">
+ ${F('svc.commerce','מסחר – סוג המסחר במתחם ובסביבה, שיעור שימוש ושביעות רצון','textarea')}${F('svc.openPublic','שטחים ציבוריים פתוחים – שיעור שימוש, קהל יעד, מצב תחזוקה','textarea')}${F('svc.openPrivate','שטחים פרטיים פתוחים – שימוש, תחזוקה, פיזור','textarea')}</div></div>
+<div class="card"><h3>תנועה והתניידות</h3><div class="grid">
+ ${F('svc.ptLevel','רמת נגישות לתחבורה ציבורית','select',{opts:['נמוכה','בינונית','גבוהה']})}${F('svc.carOwn','בעלות על רכב וממוצע רכבים למשק בית (למ״ס, א״ס)')}${F('svc.carCommute','שיעור היוממים לעבודה ברכב פרטי (למ״ס, א״ס)')}
+ ${F('svc.parking','חניה – היכן חונים, חניות פרטיות, מצוקת חניה','textarea',{rows:2})}${F('svc.walk','הליכתיות בסף הבית – טופוגרפיה, ספסלים, ביטחון, נגישות לכיסאות גלגלים ועגלות, הצללה, שבילים אהובים','textarea')}</div></div>
+<div class="card"><h3>הרחבות לדו״ח המלא <span class="pill">מבוסס על הסקר</span></h3><div class="grid">
+ ${F('svc.fullInst','מוסדות ציבור – היקף שימוש, שביעות רצון, ויכולת הפרוגרמה המוצעת לתת מענה','textarea',{full:1})}${F('svc.fullOpen','שטחים פתוחים – שימוש, צרכים, שביעות רצון, מענה הפרוגרמה','textarea',{full:1})}
+ ${F('svc.fullCommerce','מסחר – הרגלי קנייה, שימוש וצרכים','textarea',{full:1})}${F('svc.fullMove','התניידות – הרגלים, שימוש ושביעות רצון מתח״צ, חניה, רכיבה, הליכתיות','textarea',{full:1})}</div></div>`;};
+function svcTableHtml(ui){const sm=S.env.summary||{};return `<${ui?'div class="scroll"':'div'}><table class="t"><thead><tr><th>קטגוריה</th><th>מספר ברדיוס ${S.env.radius} מ׳</th><th>הקרוב ביותר</th><th>מרחק הליכה</th><th>יעד</th><th>סטטוס</th></tr></thead><tbody>
+ ${CATS.map(k=>{const x=sm[k.k]||{};const ok=x.dist!=null&&x.dist<=th(k.k);return `<tr><td>${k.l}</td><td>${x.count??'—'}</td><td>${esc(x.name||'—')}</td><td>${x.dist!=null?Math.round(x.dist)+' מ׳'+(x.est?' (הערכה)':''):'—'}</td><td>${th(k.k)} מ׳</td><td>${x.count===0?'✗ אין':x.dist==null?'—':ok?'✓ בטווח':'✗ מחוץ לטווח'}</td></tr>`}).join('')}</tbody></table></div>
+ <p class="small">מקור: OpenStreetMap, ${new Date(S.env.fetchedAt).toLocaleDateString('he-IL')}; ${S.env.walkMode==='route'?'מרחקי הליכה ברשת הרחובות (OSRM)':'הערכת מרחקים'}. לאימות בסיור.</p>`;}
+AFTER.svc=()=>drawMap(false);
+
+VIEWS.survey=()=>{const a=agg(),st=sampleTarget(),G=surveyGroups(),t=totals();return `
+<div class="card"><h3>יעד הסקר החברתי</h3>
+ <div class="kpis"><div class="kpi"><b>${fmtN(t.all)}</b><span>יחידות קנייניות</span></div><div class="kpi"><b>${st?st.rate+'%':'—'}</b><span>שיעור נדרש (${t.units<=100?'עד':'מעל'} 100 יח״ד)</span></div><div class="kpi"><b>${st?st.n:'—'}</b><span>סקרים נדרשים</span></div><div class="kpi ${st&&a.N<st.n?'w':''}"><b>${a.N}</b><span>סקרים שבוצעו</span></div></div>
+ <table class="t" style="margin-top:10px"><thead><tr><th>קבוצה</th><th>שיעור במתחם</th><th>יעד ראיונות</th><th>בוצעו</th><th>שיעור בפועל</th><th>הנחיה</th></tr></thead><tbody>
+ ${G.map(g=>`<tr><td>${g.l}</td><td>${fmtPct(g.share)}</td><td>${g.tgtN??'—'}</td><td>${g.done}</td><td>${fmtPct(g.donePct)}</td><td class="small">${g.k==='ownRes'?'ככלל מעל 35% מהראיונות':g.k==='biz'?'בעלי הנכס וגם שוכרי הנכס':'ככלל פחות מ־35%'}</td></tr>`).join('')}</tbody></table>
+ ${a.N?`<h4>פריסה לפי בניינים</h4><div class="row">${S.buildings.map(b=>{const d=a.byB[bName(b)]||0;const all=(n(b.units)||0)+(n(b.commercial)||0);return `<span class="pill ${all&&d/all>=(st?.rate||35)/100?'ok':'bad'}">${esc(bName(b))}: ${d}/${all}</span>`}).join(' ')}</div>`:''}
+</div>
+<div class="card"><h3>תשובות הסקר</h3><p class="small" style="margin:0 0 8px">שורה לכל משק בית / יחידה. ללא שמות ומספרי דירות. ייבוא CSV (למשל מ־Google Forms) לפי התבנית.</p>
+ <div class="row noprint" style="margin-bottom:8px"><button class="btn" data-add="survey.resp">+ משיב</button><label class="btn">⬆ ייבוא CSV<input type="file" id="csvIn" accept=".csv,text/csv" hidden></label><button class="btn" id="csvTpl">⬇ תבנית CSV</button>${a.N?'<button class="btn ghost sm" id="clrR">ניקוי הכול</button>':''}</div>
+ <div class="scroll"><table class="t"><thead><tr><th>#</th>${RESP_COLS.map(c=>`<th>${c.l}</th>`).join('')}<th></th></tr></thead><tbody>
+ ${S.survey.resp.map((r,i)=>`<tr><td>${i+1}</td>${RESP_COLS.map(c=>{const p=`survey.resp.${i}.${c.k}`;if(c.type==='bld')return `<td>${cellIn(p,r[c.k],{opts:S.buildings.map(bName)})}</td>`;return `<td>${cellIn(p,r[c.k],{opts:c.opts,num:c.type==='num',w:c.type==='num'?55:null})}</td>`}).join('')}<td><button class="btn ghost sm" data-del="survey.resp" data-i="${i}">✕</button></td></tr>`).join('')||`<tr><td colspan="${RESP_COLS.length+2}" class="small">אין תשובות</td></tr>`}
+ </tbody></table></div></div>
+<div class="card"><h3>סיכום תהליך שיתוף הציבור <span class="pill">נספח בדו״ח המלא</span></h3>${listTable('survey.participation',[{k:'date',l:'תאריך',w:95},{k:'type',l:'סוג המפגש',opts:['כנס שיתוף ציבור','קבוצת מיקוד','מפגש עם אוכלוסייה ייעודית','כנס דיירים','אחר']},{k:'topic',l:'נושא'},{k:'n',l:'משתתפים',num:1,w:60},{k:'insights',l:'תובנות מרכזיות',area:1}],{addL:'מפגש',noMax:1})}
+ ${F('survey.orgInsights','סיכום תובנות מתהליך ההתארגנות (אם קודם ע״י היועץ)','textarea',{full:1})}</div>`;};
+
+VIEWS.concl=()=>{const sug=suggestRecs();const used=new Set(S.recs.map(r=>r.sid));return `
+<div class="card"><h3>סיכום ומסקנות</h3><p class="small" style="margin-top:0">השפעת המיזם (לחיוב ולשלילה), חסמים, חוזקות והזדמנויות, וצרכי האוכלוסייה העתידית.</p>
+ ${listTable('concl',[{k:'finding',l:'ממצאים',area:1},{k:'co',l:'אתגרים ו/או הזדמנויות',area:1}],{addL:'מסקנה',noMax:1})}
+ <button class="btn sm noprint" id="conclAuto">✎ הצעת מסקנות מהנתונים</button></div>
+<div class="card"><h3>זרקור אל סוגיה משמעותית</h3>${F('spotlight','הרחבה על סוגיה ייחודית למתחם','textarea',{rows:5})}</div>
+<div class="card"><h3>המלצות${isFull()?'':' ראשוניות וסוגיות לבחינה נוספת'}</h3>
+ ${sug.length?`<details open class="guide"><summary>💡 הצעות לפי הנתונים (${sug.filter(s=>!used.has(s.id)).length} חדשות)</summary><div>${sug.map(s=>`<div class="sugg ${used.has(s.id)?'used':''}"><span class="pill">${s.type}</span> <b>${esc(s.finding)}</b><br>${esc(s.rec)} ${used.has(s.id)?'<span class="pill ok">נוסף</span>':`<button class="btn sm" data-addsug="${s.id}">+ הוספה לטבלה</button>`}</div>`).join('')}</div></details>`:''}
+ <div class="scroll" style="max-height:none"><table class="t"><thead><tr><th>#</th><th>סוג</th><th>ממצא</th><th>המלצה</th><th>מועד/שלב יישום</th><th>גורם אחראי</th><th>היכן להטמיע</th>${isFull()?'<th>סטטוס הטמעה</th>':''}<th></th></tr></thead><tbody>
+ ${S.recs.map((r,i)=>`<tr><td>${i+1}</td><td>${cellIn(`recs.${i}.type`,r.type,{opts:['תכנונית','חברתית']})}</td><td>${cellIn(`recs.${i}.finding`,r.finding,{area:1})}</td><td>${cellIn(`recs.${i}.rec`,r.rec,{area:1,h:80})}</td><td>${cellIn(`recs.${i}.stage`,r.stage,{ph:STAGES.join(' / ')})}</td><td>${cellIn(`recs.${i}.resp`,r.resp,{ph:'ראש צוות התכנון…'})}</td><td>${cellIn(`recs.${i}.where`,r.where,{ph:'הוראות התכנית…'})}</td>${isFull()?`<td>${cellIn(`recs.${i}.status`,r.status,{opts:['הוטמעה','הוטמעה חלקית','לא הוטמעה','בבחינה']})}</td>`:''}<td><button class="btn ghost sm" data-del="recs" data-i="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="9" class="small">הוסיפו מההצעות או ידנית</td></tr>'}
+ </tbody></table></div><button class="btn sm noprint" data-add="recs" style="margin-top:8px">+ המלצה</button>
+ <p class="small">גורם אחראי לדוגמה: ${RESP.join(', ')} · שלב: ${STAGES.join(', ')} · הטמעה: ${WHERE.join(', ')}</p></div>
+<div class="card"><h3>קריטריונים לבחינת חלופות <span class="pill">2–4 קריטריונים</span></h3>${S.criteria.map((c,i)=>`<div class="f" style="margin-bottom:6px"><input data-p="criteria.${i}" value="${esc(c)}" placeholder="לדוגמה: ישימות תתי־המתחמים למימוש; אפשרות בינוי־פינוי"></div>`).join('')}${S.criteria.length<4?'<button class="btn sm noprint" id="addCrit">+ קריטריון</button>':''}</div>`;};
+
+VIEWS.alts=()=>{const A=S.alts;return `
+<div class="card"><h3>היבטים חברתיים בהערכת חלופות</h3><div class="grid">${A.names.map((x,i)=>F(`alts.names.${i}`,`שם חלופה ${i+1}`)).join('')}</div>
+ <div class="row noprint" style="margin:8px 0"><button class="btn sm" id="altDef">↳ שורות ברירת מחדל מהתבנית</button><button class="btn sm" id="altFromRecs">↳ שורות מההמלצות התכנוניות</button></div>
+ <div class="scroll" style="max-height:none"><table class="t"><thead><tr><th>המלצה חברתית</th><th>ביטוי תכנוני</th>${A.names.map(x=>`<th>${esc(x)}</th>`).join('')}<th></th></tr></thead><tbody>
+ ${A.rows.map((r,i)=>`<tr><td>${cellIn(`alts.rows.${i}.rec`,r.rec,{area:1})}</td><td>${cellIn(`alts.rows.${i}.expr`,r.expr,{area:1})}</td>${[1,2,3].map(k=>`<td>${cellIn(`alts.rows.${i}.a${k}`,r['a'+k],{area:1,ph:'כיצד החלופה נותנת / לא נותנת מענה'})}</td>`).join('')}<td><button class="btn ghost sm" data-del="alts.rows" data-i="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="6" class="small">אין שורות</td></tr>'}
+ </tbody></table></div><button class="btn sm noprint" data-add="alts.rows" style="margin-top:8px">+ שורה</button>
+ ${S.criteria.filter(has).length?`<p class="small">קריטריונים שנקבעו בדו״ח המצב הקיים: ${S.criteria.filter(has).map(esc).join(' · ')}</p>`:''}</div>
+<div class="card"><h3>המלצת היועץ החברתי ביחס לחלופות</h3>${F('alts.opinion','חוות דעת','textarea',{rows:5})}</div>`;};
+
+VIEWS.gantt=()=>{if(!S.gantt.length)S.gantt=GANTT_DEF.map(a=>({act:a,m:Array(12).fill(false),status:''}));const st=sampleTarget(),G=surveyGroups();return `
+<div class="card"><h3>גאנט העבודה החברתית (חודשים)</h3><div class="scroll" style="max-height:none"><table class="t gantt"><thead><tr><th>פעולה</th>${Array.from({length:12},(_,i)=>`<th>${i+1}</th>`).join('')}${isFull()?'<th>סטטוס ביצוע</th>':''}<th></th></tr></thead><tbody>
+ ${S.gantt.map((g,i)=>`<tr><td>${cellIn(`gantt.${i}.act`,g.act)}</td>${g.m.map((v,j)=>`<td class="gc ${v?'on':''}" data-gc="${i}.${j}"></td>`).join('')}${isFull()?`<td>${cellIn(`gantt.${i}.status`,g.status,{opts:['בוצע','בביצוע','מתוכנן','נדחה/שונה']})}</td>`:''}<td><button class="btn ghost sm" data-del="gantt" data-i="${i}">✕</button></td></tr>`).join('')}
+ </tbody></table></div><button class="btn sm noprint" id="addG" style="margin-top:8px">+ פעולה</button><p class="small">לחיצה על משבצת מסמנת/מבטלת חודש.</p>
+ ${F('ganttRationale','הרציונל לתהליך העבודה המוצע לאור ממצאי הדו״ח','textarea')}</div>
+<div class="card"><h3>יעד הסקרים</h3><p>יח״ד במתחם: <b>${fmtN(totals().units)}</b> · שיעור נדרש: <b>${st?st.rate+'%':'—'}</b> · סקרים נדרשים: <b>${st?st.n:'—'}</b></p>
+ <table class="t"><thead><tr><th>קבוצה</th><th>שיעור במתחם</th><th>יעד</th></tr></thead><tbody>${G.map(g=>`<tr><td>${g.l}</td><td>${fmtPct(g.share)}</td><td>${g.tgtN??'—'}</td></tr>`).join('')}</tbody></table></div>`;};
+
+VIEWS.summary=()=>{const w=words(S.summary);return `
+<div class="card"><h3>תקציר – עמדת היועץ/ת</h3>${F('summary','פסקה בלשון חופשית המציגה את המתחם מנקודת המבט המקצועית','textarea',{rows:8})}
+ <p class="small ${w>250?'over':''}" id="wc">${w} / 250 מילים</p><div class="row noprint"><button class="btn sm" id="sumAuto">✎ טיוטה מהנתונים</button>${settings.apiKey?'<button class="btn sm ai" id="sumAI">✨ ניסוח עם Claude</button>':''}<span class="small" id="aimsg"></span></div></div>
+<div class="card"><h3>כרטיסיות בניינים (תצוגה מקדימה)</h3>${buildingCards()}</div>`;};
+
+VIEWS.report=()=>{const rel=relevantChecks();const miss=rel.filter(c=>!c.ok());return `
+<div class="card noprint"><h3>הפקה</h3><div class="row">
+ <label>תוצר: <select id="repType" style="border:1px solid var(--line);border-radius:8px;padding:5px">${RT.map(r=>`<option value="${r}" ${S.meta.reportType===r?'selected':''}>${RT_LABEL[r]}</option>`).join('')}</select></label>
+ <button class="btn pri" id="expWord">⬇ Word</button><button class="btn" id="expPrint">🖨 הדפסה / PDF</button><button class="btn" id="expHtml">⬇ HTML</button></div>
+ <h4>${miss.length?`חסרים ${miss.length} פריטים מתוך ${rel.length}`:'✓ כל הפריטים הנדרשים לתוצר זה הוזנו'}</h4>
+ ${miss.length?`<ul class="gaplist">${miss.map(c=>`<li><a href="#" data-go="${c.s}">${STEPS.find(s=>s.id===c.s).t}</a> – ${c.l}</li>`).join('')}</ul>`:''}</div>
+<div class="paper" id="paper">${buildReport(S.meta.reportType)}</div>`;};
+
+/* ---------------- MAP ---------------- */
+const CAT_COLORS={kinder:'#e07b39',school:'#c94f4f',clinic:'#2f8f9d',pharmacy:'#3a9d6b',grocery:'#8a5cc2',food:'#b98a2b',park:'#3e9b3e',worship:'#6d6d6d',community:'#d1497b',bus:'#2c6fbb',rail:'#1c3f73',civic:'#7c5b3a'};
+function drawMap(editable){if(typeof L==='undefined'){$('#map').innerHTML='<div class="note warn">ספריית המפה לא נטענה (נדרש חיבור לאינטרנט).</div>';return;}
+  const pts=S.buildings.filter(b=>b.lat);const c=S.env.center||(pts.length?[pts.reduce((s,b)=>s+b.lat,0)/pts.length,pts.reduce((s,b)=>s+b.lng,0)/pts.length]:[32.08,34.78]);
+  map=L.map('map').setView(c,pts.length?16:12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  if(S.compound.geo){try{L.geoJSON(S.compound.geo,{style:{color:'#0C3058',weight:2,dashArray:'5 4',fillColor:'#50B0A0',fillOpacity:.15}}).addTo(map).bindTooltip('גבול המתחם המוכרז');}catch(e){}}
+  const grp=[];S.buildings.forEach(b=>{if(!b.lat)return;const p=pct(b.signed,b.units);const col=editable?'#c9792b':p==null?'#999':p>=66?'#2d7a46':p>=40?'#d9a21b':'#b4532a';
+    grp.push(L.circleMarker([b.lat,b.lng],{radius:9,color:'#13332b',weight:2,fillColor:col,fillOpacity:.9}).addTo(map).bindTooltip(`${esc(bName(b))} · ${b.units||'?'} יח״ד${p!=null?' · '+p+'% התקשרות':''}`));});
+  if(!editable&&S.env.center){[560].forEach(r=>L.circle(S.env.center,{radius:r,color:'#1f6f5c',weight:1,dashArray:'4 4',fill:false}).addTo(map).bindTooltip('סף הבית – 7 דק׳ הליכה'));
+    (S.env.pois||[]).forEach(p=>L.circleMarker([p.lat,p.lng],{radius:5,color:CAT_COLORS[p.cat]||'#555',weight:1,fillOpacity:.8}).addTo(map).bindTooltip(`${esc(p.name||'ללא שם')} · ${CATS.find(c=>c.k===p.cat)?.l||''}`));}
+  if(grp.length>1)map.fitBounds(L.featureGroup(grp).getBounds().pad(editable?0.4:1.2));
+  if(editable)map.on('click',e=>{const b=S.buildings[selB];if(!b){toast('הוסיפו בניין תחילה');return;}b.lat=e.latlng.lat;b.lng=e.latlng.lng;b.geoErr=false;S.env.center=null;save();toast('מיקום עודכן: '+bName(b));go('compound');});
+  setTimeout(()=>map&&map.invalidateSize(),150);}
+
+/* ---------------- NETWORK ---------------- */
+async function geocodeAll(){const list=S.buildings.filter(b=>!b.lat&&(b.street||b.num));if(!list.length){toast('אין כתובות לאיתור');return;}let ok=0;
+  for(const [i,b] of list.entries()){$('#geoMsg').textContent=`מאתר ${i+1}/${list.length}…`;
+    try{const city=S.meta.city||'';let r=await(await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=1&accept-language=he&street=${encodeURIComponent((b.num||'')+' '+(b.street||''))}&city=${encodeURIComponent(city)}`)).json();
+      if(!r.length){await sleep(1100);r=await(await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=1&q=${encodeURIComponent(`${b.street} ${b.num} ${city}`)}`)).json();}
+      if(r.length){b.lat=+r[0].lat;b.lng=+r[0].lon;b.geoErr=false;ok++;}else b.geoErr=true;}catch(e){b.geoErr=true;}
+    await sleep(1100);}
+  S.env.center=null;save();go('compound');toast(`אותרו ${ok} מתוך ${list.length}`+(ok<list.length?' – את השאר מקמו בלחיצה על המפה':''),4000);}
+async function fetchEnv(){const pts=S.buildings.filter(b=>b.lat);if(!pts.length)return;const c=[pts.reduce((s,b)=>s+b.lat,0)/pts.length,pts.reduce((s,b)=>s+b.lng,0)/pts.length];
+  const R=n($('#radius').value)||1000;S.env.radius=R;const msg=t=>{const m=$('#envMsg');if(m)m.textContent=t;};msg('שולף שירותים מ־OpenStreetMap…');
+  const q=`[out:json][timeout:60];(${CATS.map(k=>`${k.q}(around:${R},${c[0]},${c[1]});`).join('')});out center tags 600;`;let els=null;
+  for(const ep of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){try{const r=await fetch(ep,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}});if(!r.ok)throw 0;els=(await r.json()).elements||[];break;}catch(e){}}
+  if(els==null){msg('⚠ שירות המפה אינו זמין כרגע – נסו שוב בעוד דקה');return;}
+  const pois=els.map(e=>{const lat=e.lat??e.center?.lat,lng=e.lon??e.center?.lon,cat=classify(e.tags||{});return lat&&cat?{cat,lat,lng,name:e.tags.name||e.tags['name:he']||'',addr:[e.tags['addr:street'],e.tags['addr:housenumber']].filter(Boolean).join(' '),air:hav(c,[lat,lng])}:null}).filter(Boolean);
+  const cand=[];CATS.forEach(k=>pois.filter(p=>p.cat===k.k).sort((a,b)=>a.air-b.air).slice(0,3).forEach(p=>cand.push(p)));msg(`נמצאו ${pois.length} שירותים. מחשב מרחקי הליכה…`);let mode='est';
+  if(cand.length){try{const coords=[[c[1],c[0]],...cand.map(p=>[p.lng,p.lat])].map(x=>x[0].toFixed(6)+','+x[1].toFixed(6)).join(';');
+    const r=await(await fetch(`https://routing.openstreetmap.de/routed-foot/table/v1/driving/${coords}?sources=0&annotations=distance`)).json();if(r.code==='Ok'){r.distances[0].slice(1).forEach((d,i)=>{cand[i].walk=d});mode='route';}}catch(e){}}
+  cand.forEach(p=>{if(p.walk==null){p.walk=p.air*1.3;p.est=true;}});const summary={};
+  CATS.forEach(k=>{const all=pois.filter(p=>p.cat===k.k);const best=cand.filter(p=>p.cat===k.k).sort((a,b)=>a.walk-b.walk)[0];summary[k.k]={count:all.length,name:best?(best.name||'ללא שם'):'',dist:best?best.walk:null,est:!!best?.est};});
+  S.env={...S.env,pois:pois.slice(0,500),summary,center:c,fetchedAt:new Date().toISOString(),walkMode:mode};
+  if(!S.src.extra.some(s=>(s.title||'').startsWith('OpenStreetMap')))S.src.extra.push({title:'OpenStreetMap (Overpass) – מיפוי שירותים',url:'https://www.openstreetmap.org',note:'נשלף '+new Date().toLocaleDateString('he-IL')});
+  save();go('svc');toast('מיפוי השירותים הושלם');}
+const CK='https://data.gov.il/api/3/action/';
+async function ckanSearch(q){const out=$('#ckOut');out.innerHTML='<p class="small">מחפש…</p>';
+  try{const r=await(await fetch(`${CK}package_search?q=${encodeURIComponent(q)}&rows=12`)).json();const res=r.result.results;
+    out.innerHTML=res.length?res.map(p=>`<div class="card" style="margin-bottom:8px;padding:12px"><b>${esc(p.title)}</b> <span class="pill">${esc(p.organization?.title||'')}</span><div class="small">${esc((p.notes||'').slice(0,220))}</div>
+     <div class="row" style="margin-top:6px">${p.resources.map(rs=>`<button class="btn sm" ${rs.datastore_active?`data-ckres="${rs.id}" data-ckname="${esc(p.title)}"`:'disabled'}>${esc(rs.name||rs.format)} (${esc(rs.format)})</button>`).join('')}
+     <a class="btn sm" href="https://data.gov.il/dataset/${p.name}" target="_blank" rel="noopener">פתיחה באתר</a><button class="btn sm" data-cksrc="${esc(p.title)}" data-ckurl="https://data.gov.il/dataset/${p.name}">+ למקורות</button></div><div class="ckr"></div></div>`).join(''):'<p class="small">לא נמצאו מאגרים</p>';
+  }catch(e){out.innerHTML=`<div class="note warn">החיבור ל־data.gov.il נכשל (${esc(e.message)}). נסו שוב או פתחו את האתר ישירות.</div>`;}}
+async function ckanQuery(resId,name,btn){const box=btn.closest('.card').querySelector('.ckr');const filt=(S.meta.city||'').trim();box.innerHTML='<p class="small">טוען…</p>';
+  try{const r=await(await fetch(`${CK}datastore_search?resource_id=${resId}&limit=100${filt?'&q='+encodeURIComponent(filt):''}`)).json();const recs=r.result.records,fields=r.result.fields.map(f=>f.id).filter(f=>f!=='_id'&&f!=='rank').slice(0,9);
+    window._ck={recs,fields,name};box.innerHTML=`<p class="small">${r.result.total} רשומות${filt?` התואמות "${esc(filt)}"`:''}</p><div class="scroll" style="max-height:360px"><table class="t"><thead><tr><th></th>${fields.map(f=>`<th>${esc(f)}</th>`).join('')}</tr></thead><tbody>
+     ${recs.map((x,i)=>`<tr><td><button class="btn sm" data-cknear="${i}">↳ מיזם</button></td>${fields.map(f=>`<td>${esc(x[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }catch(e){box.innerHTML=`<div class="note warn">שאילתה נכשלה: ${esc(e.message)}</div>`;}}
+async function askClaude(task,data){
+  const sys='אתה יועץ חברתי בכיר בהתחדשות עירונית בישראל, כותב דו"ח חברתי לפי מדריך הרשות הממשלתית להתחדשות עירונית, גרסה 3.0. כתוב בעברית מקצועית, ממוקדת וקונקרטית, בגוף שלישי. השתמש אך ורק בנתונים שסופקו; אל תמציא מספרים או שמות. היכן שחסר מידע כתוב [להשלמה: ...]. אל תכלול פרטים מזהים של דיירים.';
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':settings.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:settings.model,max_tokens:1500,system:sys,messages:[{role:'user',content:task+'\n\nנתוני הפרויקט (JSON):\n'+JSON.stringify(data)}]})});
+  const j=await r.json();if(!r.ok)throw new Error(j.error?.message||r.status);return j.content.filter(c=>c.type==='text').map(c=>c.text).join('\n').trim();}
+function compactData(){const{photos,env,...rest}=S;return{...rest,survey:{...S.survey,resp:undefined},סיכום_סקר:agg(),סיכומים:totals(),שירותים:S.env.summary};}
+
+/* ---------------- AUTO TEXT ---------------- */
+function autoSummary(){const t=totals(),P=S.pop,M=S.meta,L=[];
+  L.push(`מתחם ${M.name||'[שם]'} ב${M.city||'[עיר]'}${M.neighborhood?', שכונת '+M.neighborhood:''}, כולל ${t.nb} מבנים ובהם ${t.units} יח״ד${t.com?` ו־${t.com} יחידות מסחר/תעסוקה`:''}${t.yMin?`, שנבנו בשנים ${t.yMin}${t.yMax!==t.yMin?'–'+t.yMax:''}`:''}.`);
+  const o=ownRate(),r=rentRate(),p=phRate();if(o!=null)L.push(`כ־${o}% מהדירות בבעלות מתגוררים, ${r??'—'}% בשכירות${p?` ו־${p}% דיור ציבורי`:''}.`);
+  if(has(P.eld65))L.push(`במתחם ${P.eld65} אזרחים ותיקים${P.eld70?` (מהם ${P.eld70} בני 70+)`:''}${has(P.welfare)?` ו־${P.welfare} משקי בית נתמכי רווחה`:''}.`);
+  if(t.signPct!=null)L.push(`שיעור ההתקשרות הכולל עומד על ${t.signPct}%${S.org.devCompany?` מול ${S.org.devCompany}`:''}.`);
+  if(has(S.compound.role))L.push(S.compound.role);
+  L.push('[להשלמה: עמדת היועץ – הסוגיות המרכזיות, החוזקות והחסמים]');return L.join(' ');}
+function autoPopFull(){const a=agg();if(!a.N){toast('אין תשובות סקר');return;}
+  const top=o=>Object.entries(o).filter(x=>x[1]).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`${k} ${pct(v,a.N)}%`).join(', ');
+  if(!has(S.popFull.demo))S.popFull.demo=`גודל משק הבית הממוצע במתחם על־פי הסקר החברתי הוא ${a.hhAvg} נפשות. ${pct(a.hhSmall,a.hhN)}% ממשקי הבית קטנים (1–2 נפשות) ו־${pct(a.hhLarge,a.hhN)}% גדולים (6 ומעלה). בני 65+ מהווים ${pct(a.p65,a.persons)}% מהנפשות במשקי הבית שנסקרו, וילדים ${pct(a.pKids,a.persons)}%. [להשלמה: השוואה לממוצע הא״ס, העיר והארץ והסבר הממצאים]`;
+  if(!has(S.popFull.culture))S.popFull.culture=`זיקה לדת: ${top(a.relig)||'—'}. ${a.abroad} משקי בית (${pct(a.abroad,a.N)}%) כוללים ילידי חו״ל${Object.keys(a.countries).length?' – בעיקר '+Object.entries(a.countries).sort((x,y)=>y[1]-x[1]).map(x=>x[0]).join(', '):''}; ${a.lang} משקי בית זקוקים לתרגום. [להשלמה: השוואה וקשרים בין האוכלוסיות]`;
+  if(!has(S.popFull.ses))S.popFull.ses=`התפלגות ההכנסה ביחס לממוצע (הגדרה עצמית): ${top(a.income)||'—'}. [להשלמה: השוואה לפי זיקה לנכס וחוו״ד מחלקת הרווחה]`;
+  if(!has(S.popFull.resilience))S.popFull.resilience=`ממוצע הדירוג לקשר עם השכנים ${a.neigh??'—'}/5, ולתחושת השייכות לשכונה ${a.belong??'—'}/5. ${a.likes.length?'מה אוהבים: '+a.likes.slice(0,6).join('; ')+'.':''} [להשלמה: חוות דעת היועץ על החוסן הקהילתי]`;
+  save();go('pop');}
+function autoConcl(){const t=totals(),a=agg(),add=(f,c)=>S.concl.push({finding:f,co:c});
+  if(rentRate()>30)add(`שיעור שכירות גבוה (${rentRate()}%).`,'אתגר: סיכון לדחיקת שוכרים; הזדמנות: דיור בהישג יד בתמהיל.');
+  if(n(S.pop.eld65))add(`${S.pop.eld65} אזרחים ותיקים במתחם.`,'אתגר: מעבר דירה ותקופת שכירות; הזדמנות: בינוי־פינוי ודירות מותאמות.');
+  if(t.signPct!=null)add(`שיעור התקשרות כולל ${t.signPct}%, בפיזור לא אחיד בין הבניינים.`,'הזדמנות: מתחמי מימוש לפי בשלות; אתגר: בניינים עם התקשרות נמוכה.');
+  if(has(S.compound.role))add(S.compound.role,'יש לשמר את התפקוד הקיים בתכנון.');
+  if(a.N&&a.likes.length)add(`מקומות ותכונות שהתושבים אוהבים: ${a.likes.slice(0,4).join('; ')}.`,'חוזקה לשימור.');
+  save();go('concl');}
+
+/* ---------------- BUILDING CARDS ---------------- */
+function buildingCards(){if(!S.buildings.length)return gap('בניינים');const t=totals();
+  const typical=S.buildings.filter(b=>n(b.units)>=4&&b.btype!=='צמוד קרקע'),atyp=S.buildings.filter(b=>!(n(b.units)>=4&&b.btype!=='צמוד קרקע'));
+  const card=(title,bs)=>{const u=bs.reduce((s,b)=>s+(n(b.units)||0),0);const ten=TENURE.slice(0,4).map(g=>`${g.l.split(' (')[0]} ${fmtPct(pct(bs.reduce((s,b)=>s+(n(b[g.k])||0),0),u))}`).join(' · ');
+    const m=bs.map(b=>n(b.maint)).filter(v=>v!=null);const ph=S.photos.filter(p=>bs.some(b=>bName(b)===p.bld)).slice(0,2);
+    return `<div class="bcard"><div><h4>${esc(title)}</h4><ul><li>יחידות דיור: ${u||'—'}</li><li>זיקה לנכס: ${ten}</li><li>רמת תחזוקה: ${m.length?(Math.round(m.reduce((s,x)=>s+x,0)/m.length*10)/10)+' / 5':gap('תחזוקה')}</li><li>יח״ד לא טיפוסיות: ${bs.reduce((s,b)=>s+(n(b.atypical)||0),0)}${bs.map(b=>b.atypNote).filter(Boolean).length?' – '+esc(bs.map(b=>b.atypNote).filter(Boolean).join('; ')):''}</li></ul></div>${ph.length?ph.map(p=>`<img src="${p.data}">`).join(''):'<div class="ph">תמונה עדכנית של הבניין</div>'}</div>`;};
+  let h='';
+  if(typical.length<=10)typical.forEach(b=>h+=card(bName(b),[b]));
+  else{const grp={};typical.forEach(b=>{const k=b.street||'אחר';(grp[k]=grp[k]||[]).push(b);});Object.entries(grp).forEach(([k,bs])=>h+=card(`מקבץ: ${k} (${bs.map(b=>b.num).join(', ')})`,bs));}
+  if(atyp.length)h+=card('מבנים לא טיפוסיים (צמודי קרקע ומבנים עד 4 יח״ד)',atyp);
+  return h+'<p class="small">מקורות: נסחי טאבו | ארנונה | סיור במתחם</p>';}
+
+/* ---------------- REPORT ---------------- */
+function tbl(head,rows,cls){return `<table ${cls?`class="${cls}"`:''}><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>c&&typeof c==='object'?`<td class="${c.cls||''}">${c.v}</td>`:`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
+function para(txt,label){if(!has(txt))return label?`<p>${gap(label)}</p>`:'';return esc(txt).split(/\n+/).map(p=>`<p>${p.replace(/\[להשלמה:([^\]]*)\]/g,'<span class="gap">[להשלמה:$1]</span>')}</p>`).join('');}
+const srcLine=s=>`<p class="src">מקורות: ${s}</p>`;
+function cmpTable(){return tbl(['נושא',...CMP_COLS.map(c=>c.l)],CMP.filter(r=>!r.custom||has(S.urban.cmp[r.k]?.label)).map(r=>[r.custom?esc(S.urban.cmp[r.k].label):r.l,...CMP_COLS.map(c=>{const v=S.urban.cmp[r.k]?.[c.k];return has(v)?esc(v):(c.k==='cmp'?'—':gap(c.l));})]));}
+function burdenHtml(){const B=S.burden;if(!ROOMS.some(r=>has(B.rent[r.k])||has(B.price[r.k])))return `<p>${gap('נטל עלות הדיור – נתוני שמאי והכנסות')}</p>`;const inc=incomes();
+  const one=(kind,fut,title)=>{const rows=burdenRows(kind,fut);if(!rows.some(r=>r.monthly))return'';const rr=rows.filter(r=>r.monthly);return `<h4>${title}</h4>`+tbl(['חדרים',kind==='rent'?'שכירות ממוצעת':'החזר חודשי (75%, '+(B.years||30)+' שנה)',...inc.map(i=>i.l+(i.v?` (${fmtNIS(i.v)})`:''))],rr.map(r=>[r.l,fmtNIS(r.monthly),...r.ratios.map(p=>({cls:burdenClass(p),v:p==null?'—':p+'% · '+burdenLabel(p)}))]));};
+  return one('rent',false,'מצב קיים – שכירות')+one('buy',false,'מצב קיים – רכישה (יד שנייה)')+one('rent',true,'מצב עתידי – שכירות בדירות חדשות')+one('buy',true,'מצב עתידי – רכישת דירה חדשה')+
+   `<p class="small">עד 25% מההכנסה – סביר; 25–35% – בינוני; מעל 35% – גבוה.${n(B.rate)?` החזר המשכנתא חושב בריבית ${B.rate}%.`:''}</p>`+para(B.concl,'מסקנות נטל עלות הדיור')+srcLine('נתוני שמאי צוות התכנון | הלמ״ס – הכנסה והוצאה חודשית לתצרוכת של משקי בית');}
+function tenureTable(){const t=totals(),base=tenBase();return tbl(['זיקה לנכס','מספר','שיעור'],TENURE.map(g=>[g.l,fmtN(t.ten[g.k]),fmtPct(pct(t.ten[g.k],base))]));}
+function orgBldTable(){const t=totals();return tbl(['כתובת','יח״ד','ד. ציבורי','נציגות מוסמכת','שיעור הסמכה','ייצוג משפטי','ייפוי כוח','חתימות','% חתימות','חתימה ראשונה'],S.buildings.map(b=>[esc(bName(b)),fmtN(b.units),fmtN(b.ph),val(b.repAuth,'הסמכה'),b.repRate!=null&&b.repRate!==''?b.repRate+'%':'—',esc(b.lawyer||'—'),esc(b.poa||'—'),has(b.signed)?fmtN(b.signed):gap('חתימות'),fmtPct(pct(b.signed,b.units)),esc(b.firstSign||'—')]).concat([['<b>סה״כ</b>',`<b>${fmtN(t.units)}</b>`,`<b>${fmtN(t.ten.ph)}</b>`,'','','','',`<b>${fmtN(t.signed)}</b>`,`<b>${fmtPct(t.signPct)}</b>`,'']]));}
+function recsTable(){const full=isFull();if(!S.recs.length)return `<p>${gap('המלצות')}</p>`;const grp=t=>S.recs.filter(r=>(r.type||'חברתית')===t);let i=0;
+  const rows=[];['תכנונית','חברתית'].forEach(tp=>{const g=grp(tp);if(!g.length)return;rows.push([{cls:'grp',v:`<b>המלצות/סוגיות ${tp==='תכנונית'?'תכנוניות':'חברתיות'}</b>`},'','','','',''].concat(full?['']:[]));g.forEach(r=>{i++;rows.push([i,esc(r.finding)||gap('ממצא'),esc(r.rec)||gap('המלצה'),esc(r.stage)||gap('שלב'),esc(r.resp)||gap('גורם אחראי'),esc(r.where)||gap('היכן להטמיע')].concat(full?[esc(r.status||'—')]:[]));});});
+  return tbl(['מס׳','ממצא',full?'המלצה':'המלצה ראשונית / סוגיה להמשך בחינה','מועד/שלב ליישום','גורם אחראי','היכן להטמיע'].concat(full?['סטטוס הטמעה']:[]),rows,'recs-t');}
+function surveyTargetTable(withDone){const G=surveyGroups(),st=sampleTarget();return `<p>כמות יח״ד: <b>${fmtN(totals().units)}</b> · יחידות קנייניות: <b>${fmtN(totals().all)}</b> · שיעור הסקרים הנדרש: <b>${st?st.rate+'%':gap('שיעור')}</b> · כמות נדרשת: <b>${st?st.n:'—'}</b>${withDone?` · בוצעו: <b>${agg().N}</b>`:''}</p>`+
+  tbl(['קבוצה','שיעור במתחם','יעד ראיונות'].concat(withDone?['בוצעו','שיעור בפועל']:[]),G.map(g=>[g.l,fmtPct(g.share),g.tgtN??'—'].concat(withDone?[g.done,fmtPct(g.donePct)]:[])));}
+function ganttTable(){if(!S.gantt.length)return `<p>${gap('גאנט')}</p>`;const full=isFull();return `<table class="gantt-r"><thead><tr><th>פעולה</th>${Array.from({length:12},(_,i)=>`<th>${i+1}</th>`).join('')}${full?'<th>סטטוס</th>':''}</tr></thead><tbody>${S.gantt.map(g=>`<tr><td>${esc(g.act)}</td>${g.m.map(v=>`<td class="${v?'on':''}"></td>`).join('')}${full?`<td>${esc(g.status||'—')}</td>`:''}</tr>`).join('')}</tbody></table>`;}
+function glossaryHtml(){return tbl(['מונח','פירוש'],GLOSSARY.map(([a,b])=>[`<b>${a}</b>`,b]));}
+function sourcesHtml(full){const X=S.src;const yn=v=>esc(v||'—');
+  let h=`<div class="two">`+tbl(['מקורות מוניציפליים','שימוש'],SRC_MUNI.map(([k,l])=>[l,yn(X.muni[k])]))+tbl(['התארגנות, התקשרות וייצוג משפטי','שימוש'],SRC_DOCS.map(([k,l])=>[l,yn(X.docs[k])]))+`</div><div class="two">`+
+   tbl(['מידע תכנוני וקנייני','שימוש'],[['נסחי טאבו',yn(X.tabu)],...SRC_POLICY.map(([k,l])=>[l,yn(X.policy[k])])])+tbl(['מקורות סטטיסטיים ונוספים',''],[[esc(X.cbs||'—'),''],[esc(X.other||'—'),'']].concat(X.extra.filter(e=>has(e.title)).map(e=>[esc(e.title),esc(e.note||'')])))+`</div>`;
+  h+=`<h4>סיורים ותצפיות בשכונה</h4>`+(X.tours.some(x=>has(x.date))?tbl(['תאריך','שעה','עיקרים'],X.tours.map(x=>[esc(x.date),esc(x.time),esc(x.notes)])):`<p>${gap('לפחות סיור אחד (חובה)')}</p>`);
+  h+=`<h4>ראיונות עם גורמים קהילתיים ודמויות מפתח</h4>`+tbl(['תפקיד','שם','בוצעה שיחה'],X.interviews.map(x=>[esc(x.role),esc(x.name||'—'),esc(x.done||'—')]));
+  if(full)h+=`<h4>הסקר החברתי</h4>`+surveyTargetTable(true)+`<p>פריסה לפי בניינים: ${S.buildings.map(b=>`${esc(bName(b))} – ${agg().byB[bName(b)]||0}`).join(' · ')}</p>`;
+  return h;}
+
+function buildReport(rt){const M=S.meta,t=totals(),P=S.pop,O=S.org,a=agg();const full=rt==='מלא';
+  const cover=`<div class="cover"><div class="small">טיוטה · הוכן לפי "מדריך להכנת דו״ח חברתי במיזמי התחדשות עירונית – גרסה 3.0" (הרשות הממשלתית להתחדשות עירונית)</div>
+   <h1>דו״ח חברתי – ${rt==='מצב קיים'?'מצב קיים':rt==='הערכת חלופות'?'הערכת חלופות':'דו״ח מלא'}</h1><div class="big">מתחם ${val(M.name,'שם המתחם')}, ${val(M.city,'עיר')}</div>
+   <table class="meta"><tr><td>מסלול:</td><td>${val(M.track,'מסלול')}</td></tr><tr><td>יזם / הגוף הציבורי המוביל:</td><td>${val(M.developer,'יזם')}</td></tr><tr><td>ראש צוות התכנון:</td><td>${val(M.planningHead,'ראש צוות התכנון')}</td></tr><tr><td>ניהול פרויקט:</td><td>${esc(M.pm||'—')}</td></tr><tr><td>ייעוץ חברתי:</td><td>${val(M.consultant,'יועץ חברתי')}${M.consultantOrg?', '+esc(M.consultantOrg):''}</td></tr><tr><td>תאריך הגשה:</td><td>${M.date?new Date(M.date).toLocaleDateString('he-IL'):gap('תאריך')}</td></tr></table></div>`;
+  // executive summary block (מצב קיים – היבטים חברתיים / עיקרי הסוגיות)
+  const execSum=()=>`<h2>${full?'עיקרי הסוגיות וההמלצות החברתיות':'מצב קיים – היבטים חברתיים'}</h2>
+   <h3>הרכב האוכלוסייה וסוגיות חברתיות מרכזיות</h3>${para(S.urban.summary,'תיאור הרכב האוכלוסייה בהשוואה לעיר ולארץ')}${cmpTable()}
+   <div class="two"><div><h4>התפלגות הזיקה לנכס</h4>${tenureTable()}</div><div><h4>תמהיל גודל יח״ד</h4>${para(S.housing.mixNotes,'תובנות על התמהיל')}<h4>נטל עלות הדיור</h4>${para(S.burden.concl,'עיקרי התובנות')}</div></div>
+   ${full?`<h3>הערכת מאפייני האוכלוסייה העתידית</h3>${para(S.futurePop,'אוכלוסייה עתידית')}`:`<h3>מאפייני האוכלוסייה במיזמי בנייה חדשים</h3>${para(S.futurePop,'מגמות בבנייה החדשה')}`}
+   <h3>תהליך ההתארגנות והיקף ההתקשרות</h3><p>שנת תחילה: ${val(O.startYear,'שנה')} · מקור היוזמה: ${val(O.source,'מקור')} · היקף ההתקשרות: ${fmtPct(t.signPct)}${O.devCompany?' ('+esc(O.devCompany)+')':''}</p>${para(O.process)}
+   ${full?`<h3>עמדות הדיירים כלפי הפרויקט והגורמים המעורבים</h3>${para(O.attitudes,'עמדות הדיירים')}<h3>תפקוד המתחם ושירותים ציבוריים</h3>${para(S.svc.fullInst||S.compound.role,'תובנות מרכזיות')}`:''}
+   <h3>תובנות והמלצות מרכזיות</h3>${S.concl.length?`<ul>${S.concl.slice(0,5).map(c=>`<li>${esc(c.finding)} – ${esc(c.co)}</li>`).join('')}</ul>`:''}${S.recs.length?`<ul>${S.recs.slice(0,6).map(r=>`<li>${esc(r.rec)}</li>`).join('')}</ul>`:gap('המלצות עיקריות')}
+   ${!full&&S.criteria.filter(has).length?`<p><b>קריטריונים לבחינת חלופות:</b> ${S.criteria.filter(has).map(esc).join(' · ')}</p>`:''}`;
+  if(rt==='הערכת חלופות'){
+    return cover+execSum()+`<h2>היבטים חברתיים בהערכת חלופות</h2>`+(S.alts.rows.length?tbl(['המלצה חברתית','ביטוי תכנוני',...S.alts.names.map(esc)],S.alts.rows.map(r=>[esc(r.rec)||gap('המלצה'),esc(r.expr)||gap('ביטוי תכנוני'),esc(r.a1)||gap('מענה'),esc(r.a2)||gap('מענה'),esc(r.a3)||'—'])):`<p>${gap('טבלת הערכת חלופות')}</p>`)+
+      `<h3>המלצת היועץ החברתי ביחס לחלופות</h3>${para(S.alts.opinion,'חוות דעת')}<p class="small">מסמך פנימי במתכונת תקציר – מוגש לראש צוות התכנון ולמנהלת להתחדשות עירונית.</p>`;}
+  let h=cover;
+  h+=`<h2>תקציר</h2>${para(S.summary,'תקציר עד 250 מילים')}${S.photos.filter(p=>!p.bld).slice(0,2).map(p=>`<img class="hero" src="${p.data}">`).join('')}`;
+  h+=`<h2>מילון מונחים</h2>${glossaryHtml()}`;
+  h+=execSum();
+  h+=`<h2>1. מקורות</h2>${sourcesHtml(full)}<p class="small">בנוסף, המקורות מוצגים לאורך הדו״ח בצמוד לנתונים.</p>`;
+  // urban
+  h+=`<h2>2. רקע על המרחב העירוני והשכונתי</h2><h3>2.1 נתונים חברתיים במבט השוואתי</h3>${para(S.urban.summary,'משפט מסכם על הא״ס')}${cmpTable()}${para(S.urban.overlap,'חפיפה בין השכונה לא״ס')}${srcLine('הלמ״ס – מפקד אוכלוסין 2022 | הלמ״ס – אפיון יחידות גאוגרפיות לפי רמה חברתית־כלכלית | GOVMAP – שכבת אזורים סטטיסטיים'+(full&&a.N?' | סקר חברתי':''))}
+   <h3>2.2 סוגיות חברתיות במסמכי מדיניות ותכניות מתאר</h3>${S.policy.length?tbl(['מסמך','קנה מידה','שנה','מידע רלוונטי','מסקנות'],S.policy.map(p=>[esc(p.name),esc(p.scale),esc(p.year),esc(p.info),esc(p.concl)])):`<p>${gap('סקירת מסמכי מדיניות')}</p>`}
+   <h3>2.3 מיזמי בנייה בסביבת המתחם ואוכלוסייה עתידית</h3>${S.nearby.length?tbl(['מיזם','סוג','סטטוס','יח״ד','מסלול','יזם'],S.nearby.map(r=>[esc(r.name),esc(r.kind||'—'),esc(r.status||'—'),fmtN(r.units),esc(r.track||'—'),esc(r.developer||'—')])):`<p>${gap('מיזמי בנייה בסביבה')}</p>`}
+   <h4>משמעויות חברתיות</h4>${para(S.nearbyMeaning,'משמעות חברתית של המיזמים')}<h4>מאפייני האוכלוסייה במיזמי בנייה חדשים</h4>${para(S.futurePop,'מקרה בוחן')}<h4>מסקנות</h4>${para(S.nearbyConcl,'מסקנות')}`;
+  // compound
+  h+=`<h2>3. רקע על המתחם</h2><h3>3.1 הקו הכחול – גבולות התכנית ומיפוי בנייני המגורים</h3>${para(S.compound.boundaries,'גבולות המתחם')}
+   <p>סך היחידות הקנייניות במתחם: <b>${fmtN(t.all)}</b> – יחידות דיור ${fmtN(t.units)}; יחידות מסחר/תעסוקה ${fmtN(t.com)}.</p>${para(S.compound.btypes,'סוג המבנים')}
+   ${tbl(['כתובת','גוש/חלקה','יח״ד','מסחר','קומות','שנת בנייה','סוג','תחזוקה'],S.buildings.map(b=>[esc(bName(b)),esc(b.parcel||'—'),fmtN(b.units),fmtN(b.commercial),fmtN(b.floors),b.year||'—',esc(b.btype||'—'),b.maint?b.maint+'/5':'—']))}
+   <h4>תפקוד המתחם ותפקידו במרחב השכונתי והעירוני</h4>${para(S.compound.role,'תפקוד המתחם במרחב')}${para(S.compound.history)}${srcLine('ניתוח מצב קיים של משרד האדריכלים | נסחי טאבו | GOVMAP | סיור במתחם')}
+   <h3>3.2 דיור וזיקה לנכס</h3><p>שיעור הבעלות (בעלים מתגוררים) הוא ${fmtPct(ownRate())}${has(S.housing.cityOwn)?` – לעומת ${S.housing.cityOwn}% בעיר${has(S.housing.ilOwn)?' ו־'+S.housing.ilOwn+'% בארץ':''}`:''}. שיעור השכירות הוא ${fmtPct(rentRate())}${has(S.housing.cityRent)?` – לעומת ${S.housing.cityRent}% בעיר${has(S.housing.ilRent)?' ו־'+S.housing.ilRent+'% בארץ':''}`:''}.</p>${tenureTable()}
+   <h4>תמהיל דיור</h4>${MIX.some(m=>has(S.housing.mix[m.k]))?(()=>{const tot=MIX.reduce((s,x)=>s+(n(S.housing.mix[x.k])||0),0);return tbl(['גודל','יח״ד','שיעור בפועל','שיעור מומלץ (מינהל התכנון)'],MIX.map(m=>[m.l,fmtN(S.housing.mix[m.k]),fmtPct(pct(S.housing.mix[m.k],tot)),has(S.housing.mixRec[m.k])?S.housing.mixRec[m.k]+'%':'—']));})():`<p>${gap('תמהיל גודל יח״ד')}</p>`}${para(S.housing.mixNotes)}${para(S.housing.inclusive)}
+   ${t.ten.ph?`<h4>דיור ציבורי</h4><p>שיעור יח״ד בניהול ${esc(S.housing.phCompany||'[החברה המשכנת]')}: ${fmtPct(phRate())}${has(S.housing.phCityShare)?`; ${S.housing.phCityShare}% ממאגר הדיור הציבורי בעיר`:''}${S.housing.phSizes?`; גודל הדירות ${esc(S.housing.phSizes)}`:''}.</p>${full&&phRate()>10?`<h4>הרחבה – דיור ציבורי (מעל 10%)</h4>${para(S.housing.phText,'גודל דירות, מלאי עירוני, יידוע והתקשרות עם החברה המשכנת')}`:''}`:''}
+   ${full&&rentRate()>30?`<h4>אפיון שוכרים, משכירים ושוק השכירות (מעל 30% שכירות)</h4>${para(S.housing.rentersText,'אפיון שוכרים ושוק השכירות')}`:''}
+   ${srcLine('נתוני ארנונה | נסחי טאבו | מינהל התכנון – הנחיית תמהיל יח״ד | מאגר הדיור הציבורי – משרד הבינוי והשיכון')}
+   <h3>3.3 נטל עלות הדיור</h3>${burdenHtml()}`;
+  // population
+  const r65=pct(P.eld65,P.residents);
+  h+=`<h2>4. נתונים על אוכלוסיית המתחם</h2><h3>4.1 אוכלוסיית המתחם</h3>${para(P.text,'אפיון אוכלוסיית המתחם')}${para(P.history)}
+   <h4>אוכלוסיות ייחודיות במתחם</h4>${tbl(['נושא','מספר','שיעור'],[['סך יח״ד',fmtN(t.units),'—'],['אזרחים ותיקים (65+)',has(P.eld65)?fmtN(P.eld65):gap('אזרחים ותיקים'),fmtPct(r65)],['מהם 70+',has(P.eld70)?fmtN(P.eld70):'—',fmtPct(pct(P.eld70,P.residents))],['דיירים עם מוגבלויות',has(P.disabled)?fmtN(P.disabled):gap('מוגבלויות'),fmtPct(pct(P.disabled,P.residents))],['נתמכי רווחה (משקי בית)',has(P.welfare)?fmtN(P.welfare):gap('נתמכי רווחה'),fmtPct(pct(P.welfare,P.households||t.units))],['דיירי הדיור הציבורי (משקי בית)',fmtN(P.phHH??t.ten.ph),fmtPct(pct(P.phHH??t.ten.ph,P.households||t.units))]])}
+   <h4>גורמים ודמויות מפתח בקהילה</h4>${S.keyPeople.length?tbl(['גורם','שם אחראי','תפקיד','זיקה למתחם'],S.keyPeople.map(k=>[esc(k.kind),esc(k.name),esc(k.role),esc(k.relation)])):`<p>${gap('גורמים ודמויות מפתח')}</p>`}
+   ${srcLine('נסחי טאבו | נתוני ארנונה | אגף הרווחה העירוני | עו״ס שכונתי | החברה המשכנת | ראיונות עם אנשי מפתח')}`;
+  if(full){h+=`<h3>4.2 ניתוח דמוגרפי</h3>${a.N?`<p>גודל משק בית ממוצע (סקר): ${a.hhAvg}; משקי בית קטנים (1–2): ${fmtPct(pct(a.hhSmall,a.hhN))}; גדולים (6+): ${fmtPct(pct(a.hhLarge,a.hhN))}; בני 65+: ${fmtPct(pct(a.p65,a.persons))} מהנפשות; ילדים: ${fmtPct(pct(a.pKids,a.persons))}.</p>`:''}${para(S.popFull.demo,'ניתוח דמוגרפי')}
+    <h3>4.3 אפיון חברתי־תרבותי</h3>${a.N?tbl(['זיקה לדת','שיעור'],RELIG.filter(x=>a.relig[x]).map(x=>[x,fmtPct(pct(a.relig[x],a.N))])):''}${para(S.popFull.culture,'אפיון חברתי־תרבותי')}
+    <h3>4.4 מצב סוציו־אקונומי וחוסן קהילתי</h3>${a.N?tbl(['זיקה לנכס',...INCOME],TENURE.filter(g=>Object.values(a.incByTen[g.l]).some(Boolean)).map(g=>[g.l,...INCOME.map(x=>a.incByTen[g.l][x]||0)])):''}${para(S.popFull.ses,'מצב סוציו־אקונומי')}${para(S.popFull.resilience,'חוסן וקשרים קהילתיים')}${srcLine('סקר חברתי | הלמ״ס – מפקד אוכלוסין 2022')}`;}
+  // org
+  h+=`<h2>5. התארגנות והתקשרות עם יזמים</h2><h3>5.1 תיאור תהליך ההתארגנות</h3><ul><li>שנת תחילת קידום ההתחדשות: ${val(O.startYear,'שנה')}</li><li>מקור היוזמה: ${val(O.source,'מקור')}</li></ul>${para(O.process,'פירוט התהליך')}
+   <h4>סטטוס הסמכת נציגויות</h4>${tbl(['כתובת','כתב הסמכה','שיעור הסמכה','שנת הסמכה','גורם שסייע','התרשמות היועץ'],S.buildings.map(b=>[esc(bName(b)),val(b.repAuth,'כתב הסמכה'),b.repRate!=null&&b.repRate!==''?b.repRate+'%':'—',esc(b.repYear||'—'),esc(b.repHelper||'—'),esc(b.repImpr||'—')]))}${para(O.repNotes)}
+   <h3>5.2 ייצוג משפטי</h3><p>משרד/י עו״ד דיירים: ${val(O.legalOffices,'משרד עו״ד')}</p>${para(O.legalHow,'אופן בחירת עו״ד')}${para(O.legalImpr)}
+   <h3>5.3 פעילות יזמית</h3><ul><li>החברה היזמית: ${val(O.devCompany,'החברה היזמית')}</li><li>אופי ההסכם: ${val(O.agreement,'סוג ההסכם')}</li><li>שיעור ההתקשרות בכלל המתחם: ${fmtPct(t.signPct)}</li><li>קובלנה נגד היזם: ${esc(O.complaint||'—')}</li><li>שנת כניסה למתחם: ${esc(O.devEntry||'—')}</li></ul>${para(O.devMeetings)}${para(O.devImpr)}
+   <h4>היבטים חברתיים וכלכליים בחוזה הסופי</h4>${tbl(['נושא','פירוט בהסכם'],[['קרן תחזוקה וקרן שבר','fund'],['שכירות זמנית','rent'],['תמורות','comp'],['תמורות חלופיות לאזרחים ותיקים','senior'],['ליווי נוסף','extra']].map(([l,k])=>[l,esc(O.contract[k]||'—')]))}
+   ${full?`<h3>5.4 עמדות הדיירים ביחס למיזם</h3>${a.N?`<p>תומכים ${fmtPct(pct(a.att['תומך'],a.N))} · מתלבטים ${fmtPct(pct(a.att['מתלבט'],a.N))} · מתנגדים ${fmtPct(pct(a.att['מתנגד'],a.N))}. שביעות רצון (1–5): נציגות ${a.repSat??'—'}, עו״ד ${a.lawyerSat??'—'}, יזם ${a.devSat??'—'}.</p>`:''}${para(O.attitudes,'עמדות הדיירים')}`:''}
+   <h3>${full?'5.5':'5.4'} סיכום סטטוס התארגנות והתקשרות</h3>${para(O.summary,'אמירה רוחבית')}${orgBldTable()}
+   <div class="two"><div><h4>סטטוס קבלת מסמכים ואסמכתאות</h4>${tbl(['מסמך','התקבל'],[['כתבי הסמכת נציגויות','repLetters'],['ייפויי כוח לייצוג משפטי','poa'],['תצהיר עו״ד בדבר אחוז ההתקשרות','affidavit'],['אישור נציגות לשילוב היזם','approval']].map(([l,k])=>[l,esc(O.docs[k]||'—')]))}</div>
+   <div><h4>השתלשלות ההתארגנות</h4>${tbl(['אבן דרך','תאריך'],[['הקמת נציגות','rep'],['בחירת עו״ד','lawyer'],['בחירת יזם','dev'],['חתימה ראשונה','firstSign'],['כנסים נוספים','meetings']].map(([l,k])=>[l,esc(O.timeline[k]||'—')]))}</div></div>
+   ${srcLine('סקר חברתי | כתבי הסמכה | המנהלת להתחדשות עירונית | אסמכתאות ושיחות עם עו״ד הדיירים והחברה היזמית')}`;
+  // services
+  const V=S.svc;
+  h+=`<h2>6. שירותים ציבוריים, נגישות, תפקוד המתחם ותפקידו במרחב</h2><h3>6.1 מוסדות ציבור${full?'':', מסחר ושטחים פתוחים'}</h3>${V.inst.length?tbl(['סוג ושם השירות','כתובת','נדרש מענה חלופי בבנייה','הערות'],V.inst.map(x=>[esc(x.name),esc(x.addr),esc(x.alt||'—'),esc(x.notes)])):`<p>${gap('מיפוי מוסדות ציבור')}</p>`}
+   ${full?para(V.fullInst,'היקף שימוש ושביעות רצון ממוסדות הציבור'):''}
+   ${S.env.fetchedAt?`<h4>נגישות בהליכה לשירותים</h4>${svcTableHtml(false)}`:''}
+   <h3>${full?'6.2 שטחים פתוחים':'שטחים ציבוריים ופרטיים פתוחים'}</h3>${para(V.openPublic,'שטחים ציבוריים פתוחים')}${para(V.openPrivate)}${full?para(V.fullOpen,'שימוש ושביעות רצון'):''}
+   <h3>${full?'6.3 ':''}מסחר</h3>${para(V.commerce,'מסחר')}${full?para(V.fullCommerce):''}
+   <h3>${full?'6.4 התניידות ותנועה':'6.2 תנועה והתניידות'}</h3><ul><li>נגישות לתחבורה ציבורית: ${val(V.ptLevel,'רמת נגישות')}${full&&a.ptSat?` · שביעות רצון ${a.ptSat}/5`:''}</li><li>בעלות על רכב: ${val(V.carOwn,'בעלות על רכב')}${full&&a.carsAvg!=null?` · בסקר: ${a.carsAvg} רכבים למשק בית`:''}</li><li>יוממות ברכב פרטי: ${val(V.carCommute,'יוממות')}</li></ul>${para(V.parking)}<h4>הליכתיות בסף הבית</h4>${para(V.walk,'הליכתיות')}${full?para(V.fullMove):''}
+   ${srcLine('ניתוח מצב קיים של אדריכלי התכנית, יועצי הפרוגרמה והתחבורה | סיור | GOVMAP | ראיונות'+(full?' | סקר חברתי':''))}`;
+  // conclusions & recs
+  h+=`<h2>7. סיכום ומסקנות</h2>${S.concl.length?tbl(['מס׳','ממצאים','אתגרים ו/או הזדמנויות'],S.concl.map((c,i)=>[i+1,esc(c.finding),esc(c.co)])):`<p>${gap('סיכום ומסקנות')}</p>`}`;
+  if(has(S.spotlight))h+=`<h2>8. זרקור אל סוגיה משמעותית</h2>${para(S.spotlight)}`;
+  h+=`<h2>${has(S.spotlight)?9:8}. ${full?'המלצות':'המלצות ראשוניות וסוגיות לבחינה נוספת'}</h2>${recsTable()}${!full?`<h3>קריטריונים לבחינת חלופות</h3>${S.criteria.filter(has).length?`<ul>${S.criteria.filter(has).map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:`<p>${gap('2–4 קריטריונים')}</p>`}`:''}`;
+  h+=`<h2>${has(S.spotlight)?10:9}. תהליך העבודה החברתית${full?' (סטטוס ביצוע)':''}</h2>${ganttTable()}${para(S.ganttRationale,'רציונל')}${full?'':surveyTargetTable(false)}`;
+  // appendices
+  h+=`<h2>נספחים</h2>${full&&S.alts.rows.length?`<h3>היבטים חברתיים בהערכת חלופות</h3>${tbl(['המלצה חברתית','ביטוי תכנוני',...S.alts.names.map(esc)],S.alts.rows.map(r=>[esc(r.rec),esc(r.expr),esc(r.a1),esc(r.a2),esc(r.a3)]))}${para(S.alts.opinion)}`:''}
+   <h3>כרטיסיות בניינים</h3>${buildingCards()}<h3>מסמכים ואסמכתאות של תהליך ההתארגנות וההתקשרות</h3><p class="small">כתבי הסמכת נציגויות · אסמכתאות ייפויי כוח לייצוג משפטי · תצהיר היקף התקשרות מול החברה היזמית – מצורפים בנפרד.</p>`;
+  if(full){h+=`<h3>סיכום תהליך שיתוף הציבור</h3>${S.survey.participation.length?tbl(['תאריך','סוג','נושא','משתתפים','תובנות'],S.survey.participation.map(p=>[esc(p.date),esc(p.type),esc(p.topic),fmtN(p.n),esc(p.insights)])):`<p>${gap('מפגשי שיתוף ציבור')}</p>`}${has(S.survey.orgInsights)?`<h3>סיכום תובנות מתהליך ההתארגנות</h3>${para(S.survey.orgInsights)}`:''}
+    ${S.photos.length?`<h3>תמונות נוספות</h3><div>${S.photos.map(p=>`<figure class="fig"><img src="${p.data}"><figcaption>${esc(p.caption||'')}</figcaption></figure>`).join('')}</div>`:''}`;}
+  return h;}
+
+/* ---------------- EXPORT ---------------- */
+function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);}
+const fname=ext=>(('דוח חברתי – '+(S.meta.name||'')+' – '+(S.meta.reportType||'')).replace(/[\\/:*?"<>|]/g,'')+'.'+ext);
+const REPORT_CSS=`body{font-family:Arial,'Assistant',sans-serif;direction:rtl;font-size:10.5pt;line-height:1.5}h1{font-size:20pt;color:#0C3058;margin:4pt 0}h2{font-size:14.5pt;color:#0C3058;border-bottom:1.5pt solid #50B0A0;margin-top:18pt}h3{font-size:12pt;color:#206070}h4{font-size:11pt}table{border-collapse:collapse;width:100%;margin:5pt 0}th,td{border:1px solid #999;padding:3pt 5pt;text-align:right;vertical-align:top}th{background:#E3F2EF}.gap{background:#fde8e1;color:#a3361f;font-weight:bold}.small,.src{font-size:8.5pt;color:#555}.meta td{border:0}.big{font-size:14pt;font-weight:bold}img{max-width:260px}.b-ok{background:#dff0e3}.b-mid{background:#fdf0cf}.b-high{background:#f8d6cc}.gantt-r td.on{background:#50B0A0}.bcard{border:1px solid #bbb;padding:6pt;margin:6pt 0}.grp{background:#eef2ef}`;
+function exportWord(){const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(S.meta.name)}</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]--><style>${REPORT_CSS}@page{size:21cm 29.7cm;margin:2cm}</style></head><body dir="rtl" lang="he">${buildReport(S.meta.reportType)}</body></html>`;download(fname('doc'),new Blob(['﻿',html],{type:'application/msword'}));}
+function exportHtml(){const html=`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>${esc(S.meta.name)}</title><style>${REPORT_CSS}body{max-width:860px;margin:30px auto;padding:0 20px}</style></head><body>${buildReport(S.meta.reportType)}</body></html>`;download(fname('html'),new Blob([html],{type:'text/html'}));}
+function exportJson(){download(((S.meta.name||'project').replace(/[\\/:*?"<>|]/g,''))+'.social-report-v3.json',new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));toast('קובץ הגיבוי נשמר');}
+function parseCSV(txt){const rows=[];let row=[],f='',q=false;for(let i=0;i<txt.length;i++){const c=txt[i];if(q){if(c==='"'){if(txt[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}else if(c==='"')q=true;else if(c===','){row.push(f);f='';}else if(c==='\n'){row.push(f);rows.push(row);row=[];f='';}else if(c!=='\r')f+=c;}if(f||row.length){row.push(f);rows.push(row);}return rows.filter(r=>r.some(x=>x.trim()));}
+function importCSV(txt){const rows=parseCSV(txt.replace(/^﻿/,''));if(rows.length<2){toast('הקובץ ריק');return;}const map=rows[0].map(h=>RESP_COLS.find(c=>c.k===h.trim()||c.l===h.trim())?.k||null);let k=0;
+  rows.slice(1).forEach(r=>{const o={};map.forEach((m,i)=>{if(m)o[m]=(r[i]||'').trim()});RESP_COLS.filter(c=>c.type==='num').forEach(c=>{if(o[c.k]!==undefined)o[c.k]=n(o[c.k])});S.survey.resp.push(o);k++;});save();go('survey');toast(`יובאו ${k} משיבים`);}
+function resizeImg(file){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1000/Math.max(im.width,im.height));const cv=document.createElement('canvas');cv.width=im.width*s;cv.height=im.height*s;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',.72));};im.src=r.result;};r.readAsDataURL(file);});}
+
+/* ---------------- AUTO-FILL FROM OPEN SOURCES ---------------- */
+const R_URBAN='f65a0daf-f737-49c5-9424-d378d52104f5',R_CENSUS='9a9e085f-3bc8-41df-b15f-be0daaf99e30',R_SCHOOLS='2055063b-93e8-4d6a-b2c5-c253d18c0cf6',R_KG='75d2d6a7-edc9-4615-8e06-fc0940e384ce',R_BUS='e873e6a2-66c1-494f-a677-f5e77348edb0';
+const AGS='https://services2.arcgis.com/xMRYm7cNgdR5RN6F/arcgis/rest/services/';
+const AGS_SA=AGS+'Statistical__Areas_2022/FeatureServer/0',AGS_SOEC=AGS+'SOEC_Stat11_2021/FeatureServer/27';
+const IPLAN='https://ags.iplan.gov.il/arcgisiplan/rest/services/PlanningPublic/Xplan/MapServer';
+const GEOM='https://utility.arcgisonline.com/arcgis/rest/services/Geometry/GeometryServer/project';
+const OSRM='https://routing.openstreetmap.de/routed-foot/table/v1/driving/';
+const INCOME_REF={year:2024,d5:18565,d7:25310,il:22555};
+async function jget(u,ms=30000,opt={}){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(u,{...opt,signal:c.signal});if(!r.ok)throw new Error('HTTP '+r.status);const tx=await r.text();try{return JSON.parse(tx)}catch(e){throw new Error('תשובה לא תקינה מהשרת')}}catch(e){throw new Error(e.name==='AbortError'?'פג זמן ההמתנה':e.message)}finally{clearTimeout(t);}}
+const ckq=(res,q,limit=1000)=>jget(`${CK}datastore_search?resource_id=${res}&limit=${limit}${q?'&q='+encodeURIComponent(q):''}`).then(j=>j.result.records);
+const agsPoint=(base,lat,lng,extra='')=>jget(`${base}/query?f=json&geometry=${lng},${lat}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=false${extra}`);
+async function project(pts,inSR,outSR){if(!pts.length)return[];const g=await jget(`${GEOM}?f=json&inSR=${inSR}&outSR=${outSR}&geometries=${encodeURIComponent(JSON.stringify({geometryType:'esriGeometryPoint',geometries:pts.map(p=>({x:p[0],y:p[1]}))}))}`);return g.geometries.map(p=>[p.x,p.y]);}
+async function walkDist(c,list){/* c=[lat,lng]; list items have lat,lng */if(!list.length)return;const coords=[[c[1],c[0]],...list.map(p=>[p.lng,p.lat])].map(x=>(+x[0]).toFixed(6)+','+(+x[1]).toFixed(6)).join(';');
+  try{const r=await jget(`${OSRM}${coords}?sources=0&annotations=distance`,25000);if(r.code==='Ok')r.distances[0].slice(1).forEach((d,i)=>{list[i].walk=d;});}catch(e){}
+  list.forEach(p=>{if(p.walk==null){p.walk=p.air*1.3;p.est=true;}});}
+const trimR=o=>{const r={};for(const k in o)r[k]=typeof o[k]==='string'?o[k].trim():o[k];return r;};
+function setE(path,v,filled,label){if(v==null||v==='')return;const cur=getP(path);if(has(cur))return;setP(path,v);if(label)filled.push(label);}
+const cmpW=(a,b)=>a==null||b==null?'':a>b+0.5?'גבוה מ':a<b-0.5?'נמוך מ':'דומה ל';
+function addSrc(title,url,note){if(!S.src.extra.some(s=>s.title===title))S.src.extra.push({title,url,note});}
+
+async function autoFill(){
+  if(!S.buildings.length){toast('הוסיפו תחילה את כתובות המתחם');return;}
+  if(!S.meta.city){toast('הזינו עיר בשלב 1');return;}
+  const log=[],filled=[];const city=S.meta.city.trim();
+  openModal(`<h3>⚡ מילוי אוטומטי ממקורות פתוחים</h3><p class="small">ממלא רק שדות ריקים – נתונים שהזנתם לא יידרסו.</p><div id="afLog" class="aflog"></div><div class="row" style="margin-top:12px"><button class="btn pri" data-close="1" id="afClose" disabled>סגירה</button></div>`);
+  const L=(st,t)=>{log.push({st,t});const el=$('#afLog');if(el)el.innerHTML=log.map(x=>`<div class="af ${x.st}">${x.st==='ok'?'✓':x.st==='err'?'✗':x.st==='warn'?'!':'…'} ${x.t}</div>`).join('');};
+  const step=async(name,fn)=>{L('run',name+'…');try{const m=await fn();log.pop();L(m&&m.warn?'warn':'ok',name+(m&&m.msg?' – '+m.msg:''));}catch(e){log.pop();L('err',name+' – '+e.message);}};
+  let c=null,saAttr=null,soec=null,code=null,sa=null,matched=null,cityRows=null;
+
+  await step('איתור הכתובות במפה (OpenStreetMap)',async()=>{let n0=0;for(const b of S.buildings){if(b.lat||!(b.street||b.num))continue;
+      const r=await jget(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=1&accept-language=he&street=${encodeURIComponent((b.num||'')+' '+(b.street||''))}&city=${encodeURIComponent(city)}&addressdetails=1`);
+      if(r.length){b.lat=+r[0].lat;b.lng=+r[0].lon;b.geoErr=false;n0++;const sub=r[0].address?.suburb||r[0].address?.neighbourhood;if(sub)setE('meta.neighborhood',sub,filled,'שכונה');}else b.geoErr=true;await sleep(1100);}
+    const pts=S.buildings.filter(b=>b.lat);if(!pts.length)throw new Error('לא אותרה אף כתובת');c=[pts.reduce((s,b)=>s+b.lat,0)/pts.length,pts.reduce((s,b)=>s+b.lng,0)/pts.length];
+    return{msg:`${pts.length}/${S.buildings.length} כתובות ממוקמות`,warn:pts.length<S.buildings.length};});
+  if(!c){$('#afClose').disabled=false;save(true);return;}
+
+  await step('שיוך לאזור סטטיסטי (הלמ״ס 2022)',async()=>{const cnt={};for(const b of S.buildings.filter(b=>b.lat)){const a=(await agsPoint(AGS_SA,b.lat,b.lng)).features?.[0]?.attributes;if(a){b.sa=a.STAT_2022;cnt[a.STAT_2022]=(cnt[a.STAT_2022]||0)+1;saAttr=saAttr||a;}}
+    if(!saAttr)throw new Error('לא נמצא א״ס');sa=+Object.entries(cnt).sort((x,y)=>y[1]-x[1])[0][0];code=saAttr.SEMEL_YISHUV;setE('meta.statArea',String(sa),filled,'אזור סטטיסטי');
+    return{msg:`א״ס ${Object.keys(cnt).join(', ')} (רובע ${saAttr.ROVA}, תת־רובע ${saAttr.TAT_ROVA})`};});
+
+  await step('מדד חברתי־כלכלי 2021 לפי א״ס',async()=>{soec=(await agsPoint(AGS_SOEC,c[0],c[1])).features?.[0]?.attributes;if(!soec)return{msg:'לא נמצא',warn:1};
+    S.urban.cmp.ses=S.urban.cmp.ses||{};setE('urban.cmp.ses.sa',soec.eshkol_mad+' (2021)',filled,'אשכול חברתי־כלכלי');return{msg:`אשכול ${soec.eshkol_mad}`};});
+
+  await step('מפקד 2022 – א״ס, עיר וכלל ארצי (data.gov.il)',async()=>{
+    cityRows=(await ckq(R_CENSUS,city,400)).filter(x=>!code||+x.LocalityCode===+code);const saRow=cityRows.find(x=>+x.StatArea===+sa),ctRow=cityRows.find(x=>x.StatArea==null||x.StatArea==='');
+    const ilRow=(await ckq(R_CENSUS,'כלל ארצי',10)).find(x=>/כלל ארצי/.test(x.LocNameHeb||'')&&(x.StatArea==null||x.StatArea===''));
+    if(!saRow&&!ctRow)throw new Error('לא נמצאו נתונים ליישוב');
+    const put=(k,f,lab)=>{S.urban.cmp[k]=S.urban.cmp[k]||{};[['sa',saRow],['city',ctRow],['il',ilRow]].forEach(([col,row])=>{if(row&&row[f]!=null&&!has(S.urban.cmp[k][col]))S.urban.cmp[k][col]=lab?`${row[f]} ${lab}`:row[f];});};
+    put('hh','size_avg');put('rent','rent_pcnt');put('eld','age65_pcnt');put('kids','age0_19_pcnt','(0–19)');
+    if(!has(S.urban.cmp.x1?.label)){S.urban.cmp.x1={label:'בעלות על הדירה (%)'};put('x1','own_pcnt');}
+    if(!has(S.urban.cmp.x2?.label)){S.urban.cmp.x2={label:'משקי בית ללא רכב (%)'};put('x2','Vehicle0_pcnt');}
+    setE('housing.cityOwn',ctRow?.own_pcnt,filled);setE('housing.ilOwn',ilRow?.own_pcnt,filled);setE('housing.cityRent',ctRow?.rent_pcnt,filled);setE('housing.ilRent',ilRow?.rent_pcnt,filled);
+    if(saRow){
+      setE('svc.carOwn',`א״ס ${sa}: ${saRow.Vehicle0_pcnt}% ממשקי הבית ללא רכב ו־${saRow.Vehicle2up_pcnt}% עם 2+ רכבים (עיר: ${ctRow?.Vehicle0_pcnt??'—'}% / ${ctRow?.Vehicle2up_pcnt??'—'}%; מפקד 2022)`,filled,'בעלות על רכב');
+      setE('svc.parking',`שיעור החניה (Parking_pcnt, מפקד 2022) בא״ס ${saRow.Parking_pcnt}% לעומת ${ctRow?.Parking_pcnt??'—'}% בעיר ו־${ilRow?.Parking_pcnt??'—'}% בארץ. [לאמת הגדרה ובסיור]`,filled,'חניה');
+      setE('svc.carCommute',`[להשלמה: יוממות ברכב פרטי]; ${saRow.WrkOutLoc_pcnt}% מהמועסקים בא״ס עובדים מחוץ ליישוב (מפקד 2022)`,filled);
+      const r=saRow,t=ctRow||{},il=ilRow||{};
+      setE('urban.summary',`המתחם שוכן באזור סטטיסטי ${sa} ב${city}${saAttr?` (רובע ${saAttr.ROVA}, תת־רובע ${saAttr.TAT_ROVA})`:''}; כ־${fmtN(r.pop_approx)} תושבים וכ־${fmtN(r.hh_total_approx)} משקי בית (מפקד 2022).${soec?` הא״ס משויך לאשכול חברתי־כלכלי ${soec.eshkol_mad} (2021).`:''} שיעור המגורים בשכירות בא״ס (${r.rent_pcnt}%) ${cmpW(r.rent_pcnt,t.rent_pcnt)}העירוני (${t.rent_pcnt}%) ו${cmpW(r.rent_pcnt,il.rent_pcnt)}הארצי (${il.rent_pcnt}%). שיעור בני 65+ (${r.age65_pcnt}%) ${cmpW(r.age65_pcnt,t.age65_pcnt)}העירוני (${t.age65_pcnt}%) ו${cmpW(r.age65_pcnt,il.age65_pcnt)}הארצי (${il.age65_pcnt}%); הגיל החציוני ${r.age_median} (עיר: ${t.age_median}; ארץ: ${il.age_median}). גודל משק הבית הממוצע ${r.size_avg} (עיר: ${t.size_avg}; ארץ: ${il.size_avg}). השכר השנתי החציוני של שכירים ${fmtN(r.employeesAnnual_medWage)} ₪ (עיר: ${fmtN(t.employeesAnnual_medWage)}; ארץ: ${fmtN(il.employeesAnnual_medWage)}); בעלי תעודה אקדמית ${r.AcadmCert_pcnt}% (עיר: ${t.AcadmCert_pcnt}%). ${r.Vehicle0_pcnt}% ממשקי הבית ללא רכב. שדות נוספים במפקד (לאמת הגדרות): ילידי חו״ל מקרב היהודים ${r.j_abr_pcnt}%, עולים מאז 2002 ${r.aliya2002_pcnt}%, בני 65+ עם קושי תפקודי ${r.koshi65_pcnt}%.`,filled,'משפט מסכם על הא״ס');
+      setE('urban.overlap',`הכתובות שויכו לא״ס ${sa} לפי שכבת הא״ס של הלמ״ס (2022).${totals().units&&r.hh_total_approx?` המתחם (${totals().units} יח״ד) מהווה כ־${Math.round(totals().units/r.hh_total_approx*100)}% ממשקי הבית בא״ס, ולכן נתוני הא״ס משמשים קירוב בלבד.`:''} [להשלמה: חפיפה בין שם השכונה ותפקודה לבין גבולות הא״ס]`,filled);
+    }
+    return{msg:`א״ס ${saRow?'✓':'—'} · עיר ${ctRow?'✓':'—'} · ארץ ${ilRow?'✓':'—'}`};});
+
+  await step('מאגר מתחמי ההתחדשות העירונית (משרד הבינוי)',async()=>{const recs=(await ckq(R_URBAN,city,1000)).map(trimR).filter(x=>x.Yeshuv===city);
+    const streets=[...new Set(S.buildings.map(b=>(b.street||'').trim()).filter(Boolean))],nums=S.buildings.map(b=>parseInt(b.num)).filter(x=>!isNaN(x));
+    const score=r=>{if(S.meta.compoundId&&String(r.MisparMitham)===String(S.meta.compoundId))return 1000;const nm=r.ShemMitcham||'';if(!streets.some(s=>nm.includes(s)))return 0;let sc=1;const rng=[...nm.matchAll(/(\d+)\s*[-–]\s*(\d+)/g)].map(m=>[+m[1],+m[2]]);const single=[...nm.matchAll(/\d+/g)].map(m=>+m[0]);
+      nums.forEach(n=>{if(rng.some(([a,b])=>n>=a&&n<=b)||single.includes(n))sc+=2;});return sc;};
+    const best=recs.map(r=>({r,s:score(r)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s)[0];
+    if(!best)return{msg:`לא נמצא מתחם מוכרז התואם לכתובות (${recs.length} מתחמים ב${city})`,warn:1};
+    const r=matched=best.r;const yr=(r.TaarichHachraza||'').match(/(\d{4})/)?.[1];
+    setE('meta.name',r.ShemMitcham,filled,'שם המתחם');
+    if(/רשויות/.test(r.Maslul))setE('meta.track','מסלול רשויות',filled,'מסלול');if(/מיסוי/.test(r.Maslul))setE('meta.track','מסלול מיסוי',filled,'מסלול');
+    setE('org.startYear',yr?+yr:null,filled);if(/רשויות/.test(r.Maslul))setE('org.source','גורם ציבורי',filled);
+    setE('compound.boundaries',`מתחם "${r.ShemMitcham}" ב${city} (מס׳ מתחם ${r.MisparMitham} במאגר מתחמי ההתחדשות העירונית).${r.TaarichHachraza?` הוכרז ב־${r.TaarichHachraza}`:''}${r.Maslul?` במסלול ${r.Maslul}`:''}; סטטוס: ${r.Status||'—'}${r.MisparTochnit?` (תכנית ${r.MisparTochnit})`:''}. לפי המאגר: ${r.YachadKayam||'—'} יח״ד קיימות, ${r.YachadTosafti||'—'} תוספתיות ו־${r.YachadMutza||'—'} בסך הכול. [להשלמה: גושים וחלקות, גבולות הקו הכחול]`,filled,'גבולות ורקע המתחם');
+    setE('org.process',`המתחם הוכרז כמתחם התחדשות עירונית${r.Maslul?' במסלול '+r.Maslul:''}${r.TaarichHachraza?' ב־'+r.TaarichHachraza:''} (מאגר משרד הבינוי). [להשלמה: נציגויות, ייצוג משפטי, יזמים ושיעורי התקשרות – מהמנהלת ומהנציגויות]`,filled);
+    addSrc(`מאגר מתחמי התחדשות עירונית – מתחם ${r.MisparMitham}`,'https://data.gov.il/dataset/urban_renewal',`${r.Status||''}; ${r.YachadKayam||'?'} יח״ד קיימות`);
+    return{msg:`נמצא: ${r.ShemMitcham} (${r.Status||''}, ${r.YachadKayam||'?'} יח״ד)`};});
+
+  await step('תכניות בסביבה – מינהל התכנון (500 מ׳)',async()=>{const j=await agsPoint(IPLAN+'/1',c[0],c[1],'&distance=500&units=esriSRUnit_Meter');const P=(j.features||[]).map(f=>trimR(f.attributes));
+    const streets=S.buildings.map(b=>(b.street||'').trim()).filter(Boolean);const ym=d=>d?new Date(d).toISOString().slice(0,7):'';
+    const own=P.filter(p=>(matched&&p.pl_number===matched.MisparTochnit)||streets.some(s=>(p.pl_name||'').includes(s)&&(p.pl_name||'').match(/\d/)&&S.buildings.some(b=>(p.pl_name||'').includes(b.num))));
+    const isPolicy=p=>/כוללנית|כוללת|^תמא|^תתל|מדיניות/.test((p.entity_subtype_desc||'')+' '+(p.pl_name||'')+' '+(p.pl_number||''))||(+p.quantity_delta_120>=5000);
+    let np=0,nn=0;P.filter(p=>!own.includes(p)&&isPolicy(p)).forEach(p=>{if(S.policy.some(x=>(x.name||'').includes(p.pl_number)))return;const nat=/^תמא|^תתל/.test(p.pl_number||'');
+      S.policy.push({name:`${p.pl_name} (${p.pl_number})`,scale:nat?'ארצי':'עירוני',year:ym(p.pl_date_8)||'בהליך',info:`${p.station_desc||p.internet_short_status||''}${+p.quantity_delta_120?`; תוספת יח״ד לפי מינהל התכנון: ${fmtN(p.quantity_delta_120)}`:''}. [להשלמה: היבטים חברתיים בתכנית]`,concl:'[להשלמה]'});np++;});
+    if(np&&S.policy.some(x=>/כוללנית/.test(x.name)))setE('src.policy.master','כן',filled);if(S.policy.some(x=>/כוללת להתחדשות|מדיניות התחדשות/.test(x.name)))setE('src.policy.renewalPolicy','כן',filled);
+    P.filter(p=>!own.includes(p)&&!isPolicy(p)&&(/התחדשות|מתחם|פינוי|בינוי|עיבוי/.test(p.pl_name||'')||+p.quantity_delta_120>=20)&&!/הודעה/.test(p.entity_subtype_desc||'')).slice(0,15).forEach(p=>{
+      if(S.nearby.some(x=>(x.name||'').includes(p.pl_number)))return;const st=p.station_desc||p.internet_short_status||'';
+      S.nearby.push({name:`${p.pl_name} (${p.pl_number}) – ${st}${/אישור/.test(st)&&p.pl_date_8?' '+ym(p.pl_date_8):''}`,kind:/התחדשות|מתחם|פינוי|בינוי|עיבוי/.test(p.pl_name||'')?'התחדשות עירונית':'בנייה חדשה',status:'תכנון',units:+p.quantity_delta_120||null,track:'',developer:'',dist:'עד 500 מ׳'});nn++;});
+    if(own.length)setE('compound.history',`תכניות המתייחסות למתחם במינהל התכנון: ${own.map(p=>`${p.pl_name} (${p.pl_number}) – ${p.station_desc||p.internet_short_status||''}`).join('; ')}. [להשלמה: מועד בנייה ואכלוס]`,filled,'תכניות המתחם');
+    const tot=S.nearby.reduce((s,x)=>s+(n(x.units)||0),0);
+    if(nn)setE('nearbyMeaning',`בטווח של כ־500 מ׳ מהמתחם מקודמות ${S.nearby.length} תכניות בנייה והתחדשות${tot?`, עם תוספת מצטברת של כ־${fmtN(tot)} יח״ד לפי נתוני מינהל התכנון (לאמת – ייתכן חפיפה בין תכנית מתאר לתכניות המפורטות שלה)`:''}. [להשלמה: המשמעויות החברתיות – למשל גריעה ממלאי הדירות להשכרה בתקופות פינוי חופפות, שינוי באופי השכונה, היצע לתקופת השכירות הזמנית]`,filled);
+    addSrc('מינהל התכנון – שכבת תכניות (Xplan), רדיוס 500 מ׳','https://mavat.iplan.gov.il/SV3',`${P.length} תכניות`);
+    return{msg:`${P.length} תכניות: ${own.length} של המתחם, ${np} מסמכי מדיניות, ${nn} מיזמים בסביבה`};});
+
+  let pois=[];
+  await step('מוסדות חינוך, גני ילדים ותחנות (data.gov.il) + מרחקי הליכה',async()=>{
+    const [[X0,Y0]]=await project([[c[1],c[0]]],4326,2039);const d=(x,y)=>Math.hypot(x-X0,y-Y0);
+    const [sch,kg,bus]=await Promise.all([ckq(R_SCHOOLS,city,3000),ckq(R_KG,city,3000),ckq(R_BUS,city,3000)]);
+    const S1=sch.filter(x=>x.X&&(x.ISV_SHEM_ISHUV||'').includes(city)).map(x=>({name:x.SHEM_MOSAD,t:x.TEUR_SHLAV_HINUH||'',x:+x.X,y:+x.Y,air:d(+x.X,+x.Y)}));
+    const K1=kg.filter(x=>x.X&&(x.SETL_NAME||'').includes(city)).map(x=>({name:(x.NAME||'').replace(/^גן ילדים\s*-\s*/,''),x:+x.X,y:+x.Y,air:d(+x.X,+x.Y)}));
+    const B1=bus.filter(x=>(x.CityName||'').includes(city)&&x.Lat).map(x=>({name:'תחנה '+x.StationId,lat:+x.Lat,lng:+x.Long,air:hav(c,[+x.Lat,+x.Long])}));
+    const near=(a,k)=>a.sort((p,q)=>p.air-q.air).slice(0,k);
+    const elem=near(S1.filter(x=>/יסודי/.test(x.t)),3).map(x=>({...x,cat:'school'})),high=near(S1.filter(x=>/חט"ב|עליונה/.test(x.t)),2).map(x=>({...x,cat:'school',hi:1}));
+    const kids=near(K1.length?K1:S1.filter(x=>/גן ילדים/.test(x.t)),3).map(x=>({...x,cat:'kinder'})),bs=near(B1,3).map(x=>({...x,cat:'bus'}));
+    const itm=[...elem,...high,...kids];const wgs=await project(itm.map(p=>[p.x,p.y]),2039,4326);itm.forEach((p,i)=>{p.lng=wgs[i][0];p.lat=wgs[i][1];});
+    const all=[...itm,...bs];await walkDist(c,all);pois=all;
+    const best=cat=>all.filter(p=>p.cat===cat&&!p.hi).sort((a,b)=>a.walk-b.walk)[0];
+    S.env.summary=S.env.summary||{};
+    [['kinder',K1.length?K1:S1.filter(x=>/גן/.test(x.t))],['school',S1.filter(x=>/יסודי/.test(x.t))],['bus',B1]].forEach(([k,arr])=>{const b=best(k);S.env.summary[k]={count:arr.filter(x=>x.air<=600).length,name:b?.name||'',dist:b?b.walk:null,est:!!b?.est};});
+    S.env.center=c;S.env.radius=600;S.env.fetchedAt=new Date().toISOString();S.env.walkMode=all.some(p=>!p.est)?'route':'est';S.env.pois=all.map(p=>({cat:p.cat,lat:p.lat,lng:p.lng,name:p.name,walk:p.walk}));
+    if(!S.svc.inst.length){[...kids.slice(0,2),...elem.slice(0,2),...high.slice(0,1)].forEach(p=>S.svc.inst.push({name:(p.cat==='kinder'?'גן ילדים ':p.hi?'':'בי״ס ')+p.name+(p.hi?' (חט״ב/עליונה)':''),addr:'',alt:'',notes:`${Math.round(p.walk)} מ׳ הליכה${p.walk/p.air>1.8?` (${Math.round(p.air)} מ׳ באוויר – חסם הליכה לבדיקה בסיור)`:''}`}));filled.push('מוסדות ציבור');}
+    const b0=best('bus');if(b0)setE('svc.ptLevel',b0.walk<=200&&S.env.summary.bus.count>=10?'גבוהה':b0.walk<=400?'בינונית':'נמוכה',filled,'נגישות לתח״צ');
+    const k0=best('kinder');setE('svc.walk',`בסף הבית: תחנת האוטובוס הקרובה ${b0?Math.round(b0.walk)+' מ׳':'—'} הליכה (${S.env.summary.bus.count} תחנות ברדיוס 600 מ׳); גן הילדים הקרוב ${k0?Math.round(k0.walk)+' מ׳':'—'}; בית הספר היסודי הקרוב ${best('school')?Math.round(best('school').walk)+' מ׳':'—'}. מרחקים ברשת הרחובות (OSRM). [להשלמה: טופוגרפיה, הצללה, נגישות, ביטחון – סיור]`,filled,'הליכתיות');
+    addSrc('משרד החינוך – מוסדות חינוך; המרכז למיפוי ישראל – גני ילדים; משרד התחבורה – תחנות','https://data.gov.il','מרחקי הליכה ברשת הרחובות (OSRM)');
+    return{msg:`${S1.length} מוסדות, ${K1.length} גנים, ${B1.length} תחנות ביישוב; ${S.env.walkMode==='route'?'מרחקי הליכה מחושבים':'הערכת מרחקים'}`};});
+
+  await step('שירותים נוספים – OpenStreetMap (מרפאות, גינות, מסחר, בתי תפילה)',async()=>{
+    const ks=['clinic','pharmacy','grocery','park','worship','community','rail','food','civic'];const q=`[out:json][timeout:25];(${CATS.filter(k=>ks.includes(k.k)).map(k=>`${k.q}(around:1000,${c[0]},${c[1]});`).join('')});out center tags 400;`;
+    let els=null,last='';for(const ep of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){try{els=(await jget(ep,30000,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}})).elements;break;}catch(e){last=e.message;}}
+    if(!els)return{msg:'השרת אינו זמין כרגע ('+last+') – אפשר לנסות שוב בשלב "שירותים"',warn:1};
+    const P=els.map(e=>{const lat=e.lat??e.center?.lat,lng=e.lon??e.center?.lon,cat=classify(e.tags||{});return lat&&cat?{cat,lat,lng,name:e.tags.name||'',air:hav(c,[lat,lng])}:null}).filter(Boolean);
+    const cand=[];ks.forEach(k=>P.filter(p=>p.cat===k).sort((a,b)=>a.air-b.air).slice(0,2).forEach(p=>cand.push(p)));await walkDist(c,cand);
+    ks.forEach(k=>{const all=P.filter(p=>p.cat===k);const b=cand.filter(p=>p.cat===k).sort((x,y)=>x.walk-y.walk)[0];S.env.summary[k]={count:all.length,name:b?(b.name||'ללא שם'):'',dist:b?b.walk:null,est:!!b?.est};});
+    S.env.pois=(S.env.pois||[]).concat(P.slice(0,400).map(p=>({cat:p.cat,lat:p.lat,lng:p.lng,name:p.name})));S.env.radius=1000;
+    addSrc('OpenStreetMap (Overpass) – מיפוי שירותים','https://www.openstreetmap.org','נשלף '+new Date().toLocaleDateString('he-IL'));
+    return{msg:`${P.length} שירותים`};});
+
+  await step('מלאי הדיור הציבורי בעיר (משרד הבינוי)',async()=>{const p=await jget(`${CK}package_show?id=diurtziburi`);const r=p.result.resources.find(x=>x.datastore_active&&/מלאי/.test(x.name));if(!r)throw new Error('המשאב לא נמצא');
+    const rows=(await ckq(r.id,city,200)).filter(x=>(x.CityLMSName||'').includes(city));if(!rows.length)return{msg:'אין נתונים ליישוב',warn:1};const sm=k=>rows.reduce((s,x)=>s+(+x[k]||0),0);
+    const by=[['OneRooms','חדר אחד'],['TwoRooms','2 חד׳'],['ThreeRooms','3 חד׳'],['FourRooms','4 חד׳']].map(([k,l])=>[l,sm(k)]);const big=['FiveRooms','SixRooms','SevenRooms','EightRooms','NineRooms','TenRooms','MoreRooms'].reduce((s,k)=>s+sm(k),0);const tot=by.reduce((s,x)=>s+x[1],0)+big;
+    setE('housing.phText',`מלאי הדיור הציבורי ב${city}: כ־${fmtN(tot)} דירות (משרד הבינוי והשיכון) – ${by.map(([l,v])=>`${v} בנות ${l}`).join(', ')}${big?` ו־${big} גדולות יותר`:''}. [להשלמה: דירות הדיור הציבורי במתחם והחברה המנהלת – נסחי טאבו והחברה המשכנת]`,filled,'דיור ציבורי בעיר');
+    addSrc('משרד הבינוי והשיכון – מלאי הדיור הציבורי','https://data.gov.il/dataset/diurtziburi',`${city}: כ־${tot} דירות`);return{msg:`${fmtN(tot)} דירות בעיר`};});
+
+  await step('אוכלוסייה ותמונת גילאים בא״ס + הכנסות לפי עשירון',async()=>{
+    if(soec){const a=soec;const s65=(a.age_65_69||0)+(a.age_70_74||0)+(a.age_75_79||0)+(a.age_80_84||0)+(a.age_85_up||0),s70=s65-(a.age_65_69||0);const u=totals().units||n(matched?.YachadKayam);const hs=n(S.urban.cmp.hh?.sa);
+      setE('pop.text',`נתונים ברמת המתחם טרם התקבלו מהעירייה. כקירוב, בא״ס ${sa}: ${fmtPct(pct(s65,a.Pop_Total))} בני 65+ ו־${fmtPct(pct(s70,a.Pop_Total))} בני 70+ (${s70} מתוך ${fmtN(a.Pop_Total)}).${u&&hs?` בהינתן ${u} יח״ד וגודל משק בית ממוצע של ${hs}, אוכלוסיית המתחם מוערכת בכ־${fmtN(Math.round(u*hs))} תושבים, ומהם כ־${Math.round(u*hs*s65/a.Pop_Total)} בני 65+ (הערכה בלבד).`:''} [להשלמה: נתוני רווחה וארנונה ברמת המתחם]`,filled,'אפיון אוכלוסייה (הערכה)');}
+    setE('burden.inc.d1',INCOME_REF.d5,filled,'הכנסות לפי עשירון');setE('burden.inc.d2',INCOME_REF.d7,filled);setE('burden.inc.il',INCOME_REF.il,filled);
+    setE('src.cbs','הלמ״ס – מפקד האוכלוסין והדיור 2022 לפי יישובים וא״ס (data.gov.il); שכבת אזורים סטטיסטיים 2022; מדד חברתי־כלכלי 2021 לפי א״ס; סקר הוצאות משק הבית 2024 (הכנסה נטו לפי עשירון)',filled);
+    return{msg:`עשירון 5: ${fmtNIS(INCOME_REF.d5)} · עשירון 7: ${fmtNIS(INCOME_REF.d7)} · ממוצע: ${fmtNIS(INCOME_REF.il)} (${INCOME_REF.year})`};});
+
+  S.env.center=c;save(true);
+  L('ok',`<b>הסתיים.</b> מולאו ${filled.length} שדות${filled.length?': '+[...new Set(filled)].join(', '):''}. מה שלא פומבי (סיורים, ראיונות, רווחה, ארנונה, טאבו, מסמכי התארגנות) – להשלמה ידנית.`);
+  $('#afClose').disabled=false;go(cur);
+}
+
+/* ---------------- COMPOUND / ADDRESS MAP PICKER ---------------- */
+const MOCH_UR='https://services6.arcgis.com/I08Ekaykft5ELucH/arcgis/rest/services/GIS_UrbanRenewal/FeatureServer/1';
+const UR_STATUS={1:'תכנון ראשוני',2:'תכנון סטטוטורי',3:'תכנית מאושרת לפני מימוש',4:'תכנית מאושרת במימוש'};
+const UR_COLOR={1:'#50B0A0',2:'#2F7FB0',3:'#D9822B',4:'#7A4FB5',0:'#8A949C'};
+let UR=null,urLayer=null;
+async function loadUR(){if(UR)return UR;const j=await jget(`${MOCH_UR}/query?f=geojson&where=1%3D1&outFields=MisparProject,ShemMitcham,Yeshuv,plan_name,TeurSugMaslul,codeStatusHarashut,yachadKayamRashut,yachadMutzaRashut,YachadTosafti&outSR=4326&geometryPrecision=5&maxAllowableOffset=0.00003&resultRecordCount=1000`,45000);
+  j.features.forEach(f=>{const p=f.properties;for(const k in p)if(typeof p[k]==='string')p[k]=p[k].trim();});UR=j;return UR;}
+function urPopup(p){return `<div class="urpop"><b>${esc(p.ShemMitcham)}</b><br>${esc(p.Yeshuv)} · מתחם ${p.MisparProject}<br>מסלול: ${esc(p.TeurSugMaslul||'—')}<br>סטטוס: ${UR_STATUS[p.codeStatusHarashut]||'לא ידוע'}<br>יח״ד קיימות: ${esc(p.yachadKayamRashut||'—')} · מוצעות: ${esc(p.yachadMutzaRashut||'—')}${p.plan_name?`<br>תכנית: ${esc(p.plan_name)}`:''}<br><button class="btn pri sm" data-pickur="${p.MisparProject}" style="margin-top:6px">בחירת מתחם זה</button></div>`;}
+function inRing(pt,ring){let ins=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const[xi,yi]=ring[i],[xj,yj]=ring[j];if(((yi>pt[1])!==(yj>pt[1]))&&(pt[0]<(xj-xi)*(pt[1]-yi)/(yj-yi)+xi))ins=!ins;}return ins;}
+function inGeom(lng,lat,g){if(!g)return false;const polys=g.type==='Polygon'?[g.coordinates]:g.type==='MultiPolygon'?g.coordinates:[];return polys.some(p=>inRing([lng,lat],p[0])&&!p.slice(1).some(h=>inRing([lng,lat],h)));}
+function urAt(lat,lng){return UR?UR.features.find(f=>inGeom(lng,lat,f.geometry)):null;}
+function parseCompoundName(name){/* "ההסתדרות 197-207" / "רבי עקיבא 3-15, בר כוכבא 3-5" */const out=[];let street='';
+  for(const seg of String(name||'').replace(/\s*[-–]\s*(?=\d)/g,'-').split(/[,;]| ו(?=\S+\s+\d)/)){const m=seg.trim().match(/^(.*?)(\d[\d\s\-–]*)$/);if(!m)continue;const st=m[1].replace(/[\s\-–]+$/,'').trim();if(st)street=st;if(!street)continue;
+    m[2].split(/\s+/).filter(Boolean).forEach(tok=>{const r=tok.match(/^(\d+)[\-–](\d+)$/);if(r){let a=+r[1],b=+r[2];if(b<a||b-a>60)return;const step=(a%2===b%2)?2:1;for(let x=a;x<=b;x+=step)out.push({street,num:String(x)});}else if(/^\d+$/.test(tok))out.push({street,num:tok});});}
+  return out.length&&out.length<=40?out:[];}
+async function osmAddressesIn(geom){const ring=(geom.type==='Polygon'?geom.coordinates[0]:geom.coordinates[0][0]);const poly=ring.map(([x,y])=>`${y.toFixed(6)} ${x.toFixed(6)}`).join(' ');
+  const q=`[out:json][timeout:25];(way["building"]["addr:housenumber"](poly:"${poly}");node["addr:housenumber"](poly:"${poly}"););out tags center;`;
+  for(const ep of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){try{const j=await jget(ep,30000,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+    const seen=new Set(),res=[];j.elements.forEach(e=>{const st=e.tags['addr:street'],nm=e.tags['addr:housenumber'];if(!st||!nm)return;const k=st+'|'+nm;if(seen.has(k))return;seen.add(k);res.push({street:st,num:nm,lat:e.lat??e.center?.lat,lng:e.lon??e.center?.lon});});
+    return res.sort((a,b)=>a.street.localeCompare(b.street,'he')||parseInt(a.num)-parseInt(b.num));}catch(e){}}return null;}
+async function pickCompound(id){if(!UR)return;const f=UR.features.find(x=>String(x.properties.MisparProject)===String(id));if(!f)return;const p=f.properties;
+  S.meta.compoundId=p.MisparProject;S.compound.geo=f.geometry;S.compound.ur=p;S.meta.name=p.ShemMitcham;S.meta.city=p.Yeshuv;S.env.center=null;
+  if(/רשויות/.test(p.TeurSugMaslul||''))S.meta.track='מסלול רשויות';else if(/מיסוי/.test(p.TeurSugMaslul||''))S.meta.track='מסלול מיסוי';
+  if(!has(S.meta.ptype))S.meta.ptype='פינוי־בינוי';
+  if(!has(S.compound.boundaries)||/^מתחם "/.test(S.compound.boundaries))S.compound.boundaries=`מתחם "${p.ShemMitcham}" ב${p.Yeshuv} (מס׳ מתחם ${p.MisparProject}, שכבת מתחמי פינוי־בינוי מוכרזים של משרד הבינוי והשיכון). מסלול: ${p.TeurSugMaslul||'—'}; סטטוס: ${UR_STATUS[p.codeStatusHarashut]||'—'}${p.plan_name?`; תכנית ${p.plan_name}`:''}. יח״ד קיימות: ${p.yachadKayamRashut||'—'}; מוצעות: ${p.yachadMutzaRashut||'—'}${p.YachadTosafti?` (תוספת ${p.YachadTosafti})`:''}. [להשלמה: גושים וחלקות; אימות גבולות הקו הכחול]`;
+  let msg='המתחם נבחר';
+  if(!S.buildings.length){const parsed=parseCompoundName(p.ShemMitcham);
+    if(parsed.length){parsed.forEach(b=>S.buildings.push({id:uid(),...b}));msg=`נוספו ${parsed.length} כתובות לפי שם המתחם – לאמת`;}
+    else{toast('מחפש כתובות בתוך גבולות המתחם (OpenStreetMap)…',4000);const a=await osmAddressesIn(f.geometry);
+      if(a&&a.length){a.slice(0,60).forEach(b=>S.buildings.push({id:uid(),...b}));msg=`נוספו ${Math.min(a.length,60)} כתובות מתוך גבולות המתחם – לאמת`;}
+      else msg='לא נמצאו כתובות אוטומטית – לחצו על הבניינים במפה כדי להוסיף אותם';}}
+  save(true);go('project');toast(msg,5000);}
+async function revGeocode(lat,lng){const r=await jget(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=he&zoom=18&addressdetails=1`,15000);const a=r.address||{};
+  return{street:a.road||a.pedestrian||a.residential||'',num:a.house_number||'',city:a.city||a.town||a.village||'',sub:a.suburb||a.neighbourhood||'',display:r.display_name||''};}
+function addBuildingAt(street,num,lat,lng){if(S.buildings.some(b=>b.street===street&&String(b.num)===String(num))){toast('הכתובת כבר ברשימה');return;}S.buildings.push({id:uid(),street,num,lat,lng});save(true);go('project');toast(`נוסף: ${street} ${num}`);}
+VIEWS_PICKER=()=>{const sel=S.compound.ur;return `
+<div class="card picker"><h3>🗺️ בחירת מתחם התחדשות עירונית או כתובת</h3>
+ <p class="small" style="margin-top:0">המפה מציגה את <b>מתחמי הפינוי־בינוי המוכרזים</b> (שכבה רשמית של משרד הבינוי והשיכון, כמו ב<a href="https://www.gov.il/apps/moch/viewlist/renew/mitchamim-rashut" target="_blank" rel="noopener">רשימת המתחמים באתר הרשות</a>). לחצו על מתחם כדי לבחור אותו, או חפשו כתובת / לחצו על בניין במפה כדי להוסיף אותו.</p>
+ <div class="row noprint"><input id="urSearch" class="inp" placeholder="חיפוש מתחם או עיר – למשל: חולון ההסתדרות" style="flex:2"><input id="addrSearch" class="inp" placeholder="חיפוש כתובת – רחוב, מספר, עיר" style="flex:2"><button class="btn" id="addrGo">חיפוש כתובת</button></div>
+ <div id="urList" class="urlist"></div>
+ <div id="pmap" class="map" style="height:470px;margin-top:8px"><div class="small" style="padding:12px">טוען את מתחמי ההתחדשות…</div></div>
+ <div class="legend small" style="margin-top:6px">${[1,2,3,4].map(k=>`<span><i style="background:${UR_COLOR[k]}"></i>${UR_STATUS[k]}</span>`).join('')}<span><i style="background:${UR_COLOR[0]}"></i>לא ידוע</span><span><i class="sel"></i>המתחם שנבחר</span><span><i class="bld"></i>בניין ברשימה</span></div>
+ ${sel?`<div class="selbox"><div><b>המתחם שנבחר:</b> ${esc(sel.ShemMitcham)}, ${esc(sel.Yeshuv)} · ${UR_STATUS[sel.codeStatusHarashut]||'—'} · ${esc(sel.yachadKayamRashut||'—')} יח״ד קיימות · ${S.buildings.length} כתובות ברשימה</div><div class="row"><button class="btn sm" data-go="compound">עריכת הכתובות</button><button class="btn pri sm" id="pickAuto">⚡ מילוי אוטומטי ממקורות פתוחים</button><button class="btn ghost sm" id="unpick">ביטול בחירה</button></div></div>`:
+  S.buildings.length?`<div class="selbox"><div><b>${S.buildings.length} כתובות ברשימה</b> (ללא מתחם מוכרז נבחר)</div><div class="row"><button class="btn sm" data-go="compound">עריכת הכתובות</button><button class="btn pri sm" id="pickAuto">⚡ מילוי אוטומטי ממקורות פתוחים</button></div></div>`:''}
+</div>`;};
+async function initPicker(){const el=$('#pmap');if(!el)return;if(typeof L==='undefined'){el.innerHTML='<div class="note warn">ספריית המפה לא נטענה (נדרש חיבור לאינטרנט).</div>';return;}
+  el.innerHTML='';map=L.map('pmap',{preferCanvas:true}).setView([31.95,34.85],9);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap · מתחמים: משרד הבינוי והשיכון'}).addTo(map);
+  const m0=map;const bl=L.layerGroup().addTo(map);S.buildings.filter(b=>b.lat).forEach(b=>L.circleMarker([b.lat,b.lng],{radius:6,color:'#0C3058',weight:2,fillColor:'#fff',fillOpacity:1}).addTo(bl).bindTooltip(esc(bName(b))));
+  map.on('click',e=>showPointPopup(e.latlng,urAt(e.latlng.lat,e.latlng.lng)));
+  try{await loadUR();}catch(e){const n=document.createElement('div');n.className='note warn';n.textContent='טעינת שכבת המתחמים נכשלה ('+e.message+'). אפשר עדיין לבחור כתובות על המפה.';el.parentNode.insertBefore(n,el);return;}
+  if(map!==m0)return;
+  const selId=String(S.meta.compoundId||'');
+  urLayer=L.geoJSON(UR,{style:f=>{const s=String(f.properties.MisparProject)===selId;return{color:s?'#0C3058':UR_COLOR[f.properties.codeStatusHarashut]||UR_COLOR[0],weight:s?3:1.5,fillOpacity:s?.35:.25,fillColor:UR_COLOR[f.properties.codeStatusHarashut]||UR_COLOR[0]};},
+    onEachFeature:(f,l)=>{l.bindTooltip(`${esc(f.properties.ShemMitcham)} · ${esc(f.properties.Yeshuv)}`,{sticky:true});l.on('click',e=>{L.DomEvent.stopPropagation(e);showPointPopup(e.latlng,f);});}}).addTo(map);
+  bl.bringToFront&&bl.eachLayer(x=>x.bringToFront());
+  const sel=selId&&UR.features.find(f=>String(f.properties.MisparProject)===selId);
+  if(sel)map.fitBounds(L.geoJSON(sel).getBounds().pad(1.2));else if(S.buildings.some(b=>b.lat))map.fitBounds(L.featureGroup(bl.getLayers()).getBounds().pad(.6));
+  setTimeout(()=>map&&map.invalidateSize(),150);}
+function urSearch(q){const box=$('#urList');if(!box)return;q=(q||'').trim();if(!q||!UR){box.innerHTML='';return;}const ws=q.split(/\s+/);
+  const hits=UR.features.filter(f=>{const t=(f.properties.ShemMitcham||'')+' '+(f.properties.Yeshuv||'');return ws.every(w=>t.includes(w));}).slice(0,12);
+  box.innerHTML=hits.length?hits.map(f=>`<button class="uritem" data-urfocus="${f.properties.MisparProject}"><i style="background:${UR_COLOR[f.properties.codeStatusHarashut]||UR_COLOR[0]}"></i><b>${esc(f.properties.ShemMitcham)}</b> · ${esc(f.properties.Yeshuv)} <span class="small">${UR_STATUS[f.properties.codeStatusHarashut]||''} · ${esc(f.properties.yachadKayamRashut||'?')} יח״ד</span></button>`).join(''):'<div class="small">לא נמצאו מתחמים</div>';}
+function urFocus(id){if(!urLayer||!map)return;urLayer.eachLayer(l=>{if(String(l.feature.properties.MisparProject)===String(id)){map.fitBounds(l.getBounds().pad(1.5));L.popup().setLatLng(l.getBounds().getCenter()).setContent(urPopup(l.feature.properties)).openOn(map);}});}
+async function showPointPopup(latlng,f){const m0=map;const head=f?urPopup(f.properties).replace('</div>',''):'<div class="urpop">';
+  const pop=L.popup({maxWidth:300}).setLatLng(latlng).setContent(head+'<hr style="margin:6px 0">מאתר כתובת…</div>').openOn(m0);
+  try{const a=await revGeocode(latlng.lat,latlng.lng);window._rev={...a,lat:latlng.lat,lng:latlng.lng};
+    pop.setContent(head+`<hr style="margin:6px 0"><b>${esc(a.street||'רחוב לא מזוהה')} ${esc(a.num||'')}</b>${a.city?', '+esc(a.city):''}<br>${a.street&&a.num?'<button class="btn sm" data-addrev="1" style="margin-top:4px">+ הוספת הכתובת לרשימת הבניינים</button>':'<span class="small">לא זוהה מספר בית – לחצו על הבניין עצמו</span>'}</div>`);}
+  catch(err){pop.setContent(head+'<hr style="margin:6px 0"><span class="small">איתור הכתובת נכשל</span></div>');}}
+async function addrSearchGo(){const q=$('#addrSearch').value.trim();if(!q||!map)return;try{const r=await jget(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=1&accept-language=he&addressdetails=1&q=${encodeURIComponent(q)}`);
+  if(!r.length){toast('הכתובת לא נמצאה');return;}const lat=+r[0].lat,lng=+r[0].lon,a=r[0].address||{};map.setView([lat,lng],18);const f=urAt(lat,lng);
+  window._rev={street:a.road||'',num:a.house_number||'',city:a.city||a.town||a.village||'',lat,lng};
+  L.popup().setLatLng([lat,lng]).setContent(`<div class="urpop"><b>${esc(a.road||'')} ${esc(a.house_number||'')}</b>, ${esc(window._rev.city)}${f?`<br>בתוך מתחם: <b>${esc(f.properties.ShemMitcham)}</b> <button class="btn sm" data-pickur="${f.properties.MisparProject}">בחירת המתחם</button>`:'<br><span class="small">הכתובת אינה בתוך מתחם מוכרז</span>'}<br>${a.road&&a.house_number?'<button class="btn pri sm" data-addrev="1" style="margin-top:6px">הוספה לרשימת הבניינים</button>':''}</div>`).openOn(map);}catch(e){toast('החיפוש נכשל: '+e.message);}}
+
+/* ---------------- EVENTS ---------------- */
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='addrSearch')addrSearchGo();});
+document.addEventListener('input',e=>{if(e.target.id==='urSearch'){urSearch(e.target.value);return;}const el=e.target,p=el.dataset.p;if(!p)return;let v=el.value;if(el.dataset.num)v=v===''?null:+v;setP(p,v);
+  if(/^buildings\.\d+\.(street|num)$/.test(p)){const b=S.buildings[+p.split('.')[1]];if(b){b.lat=null;b.lng=null;}}
+  if(p==='summary'){const w=words(v);const wc=$('#wc');if(wc){wc.textContent=w+' / 250 מילים';wc.classList.toggle('over',w>250);}}save();});
+const REFRESH=/^(buildings\.\d+\.(units|signed|commercial|ownRes|ownNon|rent|ph|biz|atypical)|pop\.|housing\.|burden\.)/;
+document.addEventListener('focusout',e=>{const p=e.target.dataset?.p;if(!p||!REFRESH.test(p))return;if(e.relatedTarget&&/^(BUTTON|A|LABEL)$/.test(e.relatedTarget.tagName))return;
+  const y=window.scrollY,rel=e.relatedTarget?.dataset?.p;setTimeout(()=>{go(cur);window.scrollTo(0,y);const nx=rel&&document.querySelector(`[data-p="${CSS.escape(rel)}"]`);if(nx)nx.focus();},0);});
+document.addEventListener('change',e=>{const el=e.target;
+  if(el.name==='rt'){S.meta.reportType=el.value;save(true);go('project');return;}
+  if(el.dataset.selb!=null){selB=+el.dataset.selb;toast('לחצו על המפה כדי למקם בניין זה');return;}
+  if(el.id==='repType'){S.meta.reportType=el.value;save(true);go('report');return;}
+  if(el.id==='photoIn'){Promise.all([...el.files].map(resizeImg)).then(arr=>{arr.forEach(d=>S.photos.push({id:uid(),data:d,caption:'',bld:''}));save();go('compound');});return;}
+  if(el.id==='csvIn'){const f=el.files[0];if(f){const r=new FileReader();r.onload=()=>importCSV(r.result);r.readAsText(f,'utf-8');}return;}
+  if(el.id==='importFile'){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);if(!p.meta)throw 0;S=deepMerge(blank(),p);save(true);go('project');toast('הפרויקט נטען');}catch(err){toast('קובץ לא תקין');}};r.readAsText(f);el.value='';return;}
+  if(el.dataset.p&&el.tagName==='SELECT'&&/^(buildings\.\d+\.maint|org\.agreement)$/.test(el.dataset.p))go(cur);});
+document.addEventListener('click',async e=>{const gc=e.target.closest('[data-gc]');if(gc){const[i,j]=gc.dataset.gc.split('.').map(Number);S.gantt[i].m[j]=!S.gantt[i].m[j];gc.classList.toggle('on');save();return;}
+  const b=e.target.closest('button,a');if(!b)return;const d=b.dataset;
+  if(d.go){e.preventDefault();go(d.go);return;}
+  if(d.add){const arr=getP(d.add)||[];arr.push(d.add==='recs'?{type:'חברתית'}:d.add==='gantt'?{act:'',m:Array(12).fill(false)}:{});setP(d.add,arr);save();go(cur);return;}
+  if(d.del){getP(d.del).splice(+d.i,1);save();go(cur);return;}
+  if(b.id==='addB'){S.buildings.push({id:uid()});save();go('compound');return;}
+  if(b.id==='bulkB'){openModal(`<h3>הדבקת רשימת כתובות</h3><p class="small">שורה לכל בניין: <b>רחוב מספר, יח״ד</b>. לדוגמה:<br>הרצל 12, 16</p><textarea id="bulkT" style="width:100%;min-height:160px;border:1px solid var(--line);border-radius:8px;padding:8px"></textarea><div class="row" style="margin-top:10px"><button class="btn pri" id="bulkOk">הוספה</button><button class="btn" data-close="1">ביטול</button></div>`);return;}
+  if(b.id==='bulkOk'){$('#bulkT').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach(l=>{const[addr,u]=l.split(',');const m=addr.trim().match(/^(.*?)\s+(\d+\S*)$/);S.buildings.push({id:uid(),street:m?m[1]:addr.trim(),num:m?m[2]:'',units:n(u)});});closeModal();save();go('compound');return;}
+  if(b.id==='autoFill'||b.id==='pickAuto'){autoFill();return;}
+  if(d.pickur){map&&map.closePopup();pickCompound(d.pickur);return;}
+  if(d.urfocus){urFocus(d.urfocus);return;}
+  if(d.addrev){const a=window._rev;if(a){if(!has(S.meta.city)&&a.city)S.meta.city=a.city;addBuildingAt(a.street,a.num,a.lat,a.lng);}return;}
+  if(b.id==='addrGo'){addrSearchGo();return;}
+  if(b.id==='unpick'){S.meta.compoundId=null;S.compound.geo=null;S.compound.ur=null;save(true);go('project');return;}
+  if(b.id==='geoB'){if(!S.meta.city){toast('הזינו עיר בשלב 1');return;}geocodeAll();return;}
+  if(b.id==='fetchEnv'){fetchEnv();return;}
+  if(b.id==='instFill'){const c=S.env.center;const ex=new Set(S.svc.inst.map(x=>x.name));(S.env.pois||[]).filter(p=>PUBLIC_CATS.includes(p.cat)&&p.name&&hav(c,[p.lat,p.lng])<=560).forEach(p=>{const nm=`${CATS.find(x=>x.k===p.cat).l.split(' ')[0]} – ${p.name}`;if(!ex.has(nm)){S.svc.inst.push({name:nm,addr:p.addr||'',alt:'',notes:''});ex.add(nm);}});save();go('svc');toast('מוסדות בטווח 7 דק׳ הליכה נוספו – יש לסמן מענה חלופי');return;}
+  if(b.id==='ckGo'){ckanSearch($('#ckQ').value);return;}
+  if(d.ckq){$('#ckQ').value=d.ckq;ckanSearch(d.ckq);return;}
+  if(d.ckres){ckanQuery(d.ckres,d.ckname,b);return;}
+  if(d.cksrc){S.src.extra.push({title:'data.gov.il – '+d.cksrc,url:d.ckurl,note:'נבדק '+new Date().toLocaleDateString('he-IL')});save();toast('נוסף למקורות');go('sources');return;}
+  if(d.cknear!=null){const x=window._ck.recs[+d.cknear],f=window._ck.fields;S.nearby.push({name:f.slice(0,4).map(k=>x[k]).filter(v=>v!=null&&v!=='').join(' · '),kind:'התחדשות עירונית'});save();toast('נוסף למיזמי הבנייה (שלב 3) – השלימו סטטוס ויח״ד');return;}
+  if(b.id==='fillCmp'){['hh','rent','eld','kids'].forEach(k=>{const v=autoCmp(k);if(v!=null){S.urban.cmp[k]=S.urban.cmp[k]||{};if(!has(S.urban.cmp[k].cmp))S.urban.cmp[k].cmp=v;}});save();go('urban');return;}
+  if(d.autopop){autoPopFull();return;}
+  if(b.id==='csvTpl'){download('תבנית-סקר-חברתי.csv',new Blob(['﻿'+RESP_COLS.map(c=>c.l).join(',')+'\n'],{type:'text/csv'}));return;}
+  if(b.id==='clrR'){S.survey.resp=[];save();go('survey');return;}
+  if(d.addsug){const s=suggestRecs().find(x=>x.id===d.addsug);if(s){S.recs.push({sid:s.id,type:s.type,finding:s.finding,rec:s.rec,resp:s.resp,stage:s.stage,where:s.where});save();go('concl');}return;}
+  if(b.id==='conclAuto'){autoConcl();return;}
+  if(b.id==='addCrit'){S.criteria.push('');save();go('concl');return;}
+  if(b.id==='altDef'){ALT_DEF.forEach(x=>{if(!S.alts.rows.some(r=>r.rec===x))S.alts.rows.push({rec:x,expr:''});});save();go('alts');return;}
+  if(b.id==='altFromRecs'){S.recs.filter(r=>r.type==='תכנונית').forEach(r=>{if(!S.alts.rows.some(x=>x.rec===r.rec))S.alts.rows.push({rec:r.rec,expr:r.where||''});});save();go('alts');return;}
+  if(b.id==='addG'){S.gantt.push({act:'',m:Array(12).fill(false),status:''});save();go('gantt');return;}
+  if(b.id==='sumAuto'){S.summary=autoSummary();save();go('summary');return;}
+  if(b.id==='sumAI'){const m=$('#aimsg');m.textContent='כותב…';try{S.summary=await askClaude('כתוב תקציר לדו"ח החברתי (עד 250 מילים, פסקה אחת או שתיים) המציג את המתחם מנקודת המבט המקצועית של היועץ החברתי: הסוגיות המרכזיות, החוזקות, החסמים והכיוונים להמלצות.',compactData());save();go('summary');}catch(err){m.textContent='⚠ '+err.message;}return;}
+  if(b.id==='expWord'){exportWord();return;}if(b.id==='expHtml'){exportHtml();return;}if(b.id==='expPrint'){window.print();return;}
+  if(d.close){closeModal();return;}
+  if(b.id==='setOk'){settings.apiKey=$('#sKey').value.trim();settings.model=$('#sModel').value.trim()||'claude-sonnet-5-5';CATS.forEach(c=>{const v=n($('#th_'+c.k).value);if(v)settings.th[c.k]=v;else delete settings.th[c.k];});lsSet(LS_SETTINGS,settings);closeModal();go(cur);toast('ההגדרות נשמרו');return;}
+});
+function openModal(h){$('#modalBox').innerHTML=h;$('#modal').classList.add('on');}
+function closeModal(){$('#modal').classList.remove('on');}
+
+/* ---------------- DEMO ---------------- */
+function demo(){const d=blank();
+  Object.assign(d.meta,{name:'האלונים (דוגמה בדויה)',city:'חולון',neighborhood:'ג׳סי כהן',statArea:'412',track:'מסלול רשויות',ptype:'פינוי־בינוי',reportType:'מצב קיים',developer:'עיריית חולון – המנהלת להתחדשות עירונית',planningHead:'משרד אדריכלים לדוגמה',pm:'חברת ניהול לדוגמה',consultant:'יועצת חברתית לדוגמה',startedWork:'2026-07-01'});
+  d.src.muni={arnona:'כן',water:'לא התקבל',welfare:'כן',m106:'כן'};d.src.docs={repLetters:'כן',poa:'לא התקבל',affidavit:'לא קיים',contract:'לא קיים'};d.src.tabu='כן';d.src.policy={master:'כן',renewalPolicy:'כן',program:'אין בנמצא'};d.src.cbs='הלמ״ס – מפקד 2022, נתוני א״ס';
+  d.src.tours=[{date:'15/08/2026',time:'17:00',notes:'סיור ערב – שימוש בגינה ובחניות'}];d.src.interviews[0].name='רכזת לדוגמה';d.src.interviews[0].done='כן';
+  d.urban.cmp={hh:{cmp:2.6,sa:2.9,city:2.8,il:3.3},ses:{sa:'5',city:'6',il:'—'},rent:{sa:31,city:28,il:28},eld:{cmp:26,sa:19,city:17,il:12},kids:{sa:25,city:28,il:33}};
+  d.urban.summary='הא״ס מאופיין בשיעור קשישים גבוה מהממוצע העירוני והארצי ובשיעור ילדים נמוך.';
+  d.policy=[{name:'תכנית מתאר כוללנית',scale:'עירוני',year:'2019',info:'עידוד דירות קטנות בהתחדשות',concl:'לשלב תמהיל מגוון'}];
+  d.nearby=[{name:'מתחם הברוש',kind:'התחדשות עירונית',status:'בנייה',units:240,track:'רשויות',developer:'יזם לדוגמה'}];d.nearbyMeaning='שני מיזמי פינוי־בינוי סמוכים צפויים לגרוע כ־80 דירות מלאי השכירות בשכונה.';
+  d.buildings=[
+   {id:uid(),street:'האלונים',num:'3',parcel:'6020/14',units:24,floors:4,year:1962,btype:'שיכון',maint:'2',ownRes:13,ownNon:4,rent:5,ph:2,biz:0,atypical:2,atypNote:'סגירות מרפסת',repAuth:'כן',repRate:70,repYear:2025,signed:18,firstSign:'03/2025',lat:32.0063,lng:34.7795},
+   {id:uid(),street:'האלונים',num:'5',parcel:'6020/15',units:24,floors:4,year:1962,btype:'שיכון',maint:'2',ownRes:9,ownNon:5,rent:8,ph:2,biz:0,atypical:0,repAuth:'לא',signed:9,lat:32.0058,lng:34.7801},
+   {id:uid(),street:'הדקל',num:'2',parcel:'6020/16',units:16,commercial:3,floors:4,year:1964,btype:'בית משותף',maint:'3',ownRes:9,ownNon:2,rent:4,ph:1,biz:3,atypical:1,atypNote:'דירת גן',repAuth:'כן',repRate:80,repYear:2025,signed:12,lat:32.0067,lng:34.7807},
+   {id:uid(),street:'הדקל',num:'4',parcel:'6020/17',units:16,floors:4,year:1964,btype:'בית משותף',maint:'3',ownRes:7,ownNon:3,rent:5,ph:1,biz:0,atypical:2,atypNote:'פיצול דירה',repAuth:'חלקי',repRate:40,signed:5,lat:32.0062,lng:34.7812}];
+  d.compound={boundaries:'רחובות האלונים, הדקל והברוש.',btypes:'שיכונים ובתים משותפים בני 4 קומות',role:'מספק מלאי דירות זול יחסית בשכונה ומרכול שכונתי בקומת הקרקע בהדקל 2.',history:'אוכלס בשנות ה־60 בעיקר בעולים.',physical:''};
+  d.housing={...d.housing,cityOwn:68,ilOwn:66,cityRent:28,ilRent:28,mix:{b2:48,b3:32},mixRec:{b1:10,b2:30,b3:35,b4:20,b5:5},phCompany:'עמידר'};
+  d.burden={rent:{r3:4200,r4:5100},rentNew:{r3:5600,r4:6800},price:{r3:1650000,r4:1950000},priceNew:{r4:2900000},rate:4.8,years:30,inc:{d1L:'5',d1:13800,d2L:'7',d2:19600,city:17100,il:19300},concl:''};
+  d.pop={...d.pop,households:76,residents:198,eld65:52,eld70:38,disabled:9,welfare:11,phHH:6,text:'אוכלוסייה מבוגרת ברובה, לצד כניסה של שוכרים צעירים.'};
+  d.keyPeople=[{kind:'אגף הרווחה העירוני',name:'—',role:'עו״ס שכונתית',relation:'מלווה 11 משקי בית'}];
+  d.org={...d.org,startYear:2024,source:'גורם ציבורי',process:'המנהלת קיימה כנס פתיחה ב־2024.',legalOffices:'משרד עו״ד לדוגמה',agreement:'הסכם סופי',complaint:'לא',devCompany:'',docs:{repLetters:'חלקי',poa:'לא',affidavit:'לא'}};
+  d.svc.inst=[{name:'גן ילדים עירוני',addr:'הברוש 1',alt:'כן'}];d.svc.ptLevel='בינונית';
+  const r=x=>({bld:'האלונים 3',tenure:'בעלי דירה מתגוררים (כולל משפחה)',rooms:3,hh:2,n65:2,n70:1,kids:0,relig:'מסורתי',lang:'לא',income:'מתחת לממוצע',attitude:'תומך',signed:'כן',knowsRep:'כן',repSat:'4',lawyerSat:'3',devSat:'3',comp:'חלופת דיור לבני 70+',cars:1,ptSat:'3',neigh:'4',belong:'5',likes:'הגינה והשכנים',...x});
+  d.survey.resp=[r({}),r({bld:'האלונים 5',tenure:'שוכרים',hh:3,n65:0,n70:0,kids:1,relig:'חילוני',abroad:'אתיופיה',lang:'כן',attitude:'מתלבט',signed:'לא',knowsRep:'לא',comp:'השכרה',cars:0,neigh:'2',belong:'3',concerns:'עליית שכר דירה',likes:''}),r({bld:'הדקל 4',hh:6,n65:0,n70:0,kids:3,relig:'דתי/דתי מאוד',attitude:'מתנגד',signed:'לא',comp:'שדרוג דירה',cars:2,concerns:'דמי ניהול',income:'דומה לממוצע'})];
+  d.criteria=['ישימות תתי־המתחמים למימוש','אפשרות בינוי־פינוי לאזרחים ותיקים',''];
+  return d;}
+
+/* ---------------- INIT ---------------- */
+$('#bNew').onclick=()=>{save(true);S=blank();save(true);go('project');toast('נפתח פרויקט חדש');};
+$('#bDemo').onclick=()=>{save(true);S=demo();save(true);go('project');toast('נטען פרויקט לדוגמה (נתונים בדויים)');};
+$('#bExport').onclick=exportJson;$('#bImport').onclick=()=>$('#importFile').click();
+$('#projSel').onchange=e=>{save(true);load(e.target.value);};
+$('#bSettings').onclick=()=>openModal(`<h3>הגדרות</h3><div class="f"><label>מפתח Claude API (אופציונלי – לניסוח התקציר)</label><input id="sKey" type="password" value="${esc(settings.apiKey)}" placeholder="sk-ant-…"><div class="hint">נשמר רק בדפדפן זה. הנתונים נשלחים רק בלחיצה על "ניסוח עם Claude".</div></div>
+ <div class="f" style="margin-top:8px"><label>מודל</label><input id="sModel" value="${esc(settings.model)}"></div><h4>יעדי מרחק הליכה (מטרים)</h4><div class="grid">${CATS.map(c=>`<div class="f"><label>${c.l}</label><input id="th_${c.k}" type="number" value="${th(c.k)}"></div>`).join('')}</div>
+ <p class="small">הנחות עבודה; סף הבית לפי המדריך להקצאת שטחי ציבור – עד 7 דקות הליכה.</p><div class="row" style="margin-top:12px"><button class="btn pri" id="setOk">שמירה</button><button class="btn" data-close="1">ביטול</button></div>`);
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+(function init(){const st=lsGet(LS_SETTINGS);if(st)settings=Object.assign(settings,st);const idx=index();if(idx.length){const p=lsGet(LS_PREFIX+idx[0].id);if(p)S=deepMerge(blank(),p);}
+  renderProjSel();const h=(location.hash||'').slice(1);go(STEPS.some(s=>s.id===h)?h:'project');})();
+
+</script>
+</body>
+</html>
