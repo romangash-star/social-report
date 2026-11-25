@@ -1213,11 +1213,33 @@ function quickResult(){const miss=relevantChecks().filter(c=>!c.ok());const grou
  <p class="small" style="margin-top:0">נוצרה ב־${new Date(S.quick.at).toLocaleString('he-IL',{dateStyle:'short',timeStyle:'short'})} ממקורות פתוחים. הושלמו ${n0-miss.length} מתוך ${n0} פרקי חובה; השאר מסומנים בדו״ח <span class="gap">[להשלמה]</span>.</p>
  <div class="row"><div class="seg" role="group" aria-label="סוג הדו״ח">${RT.map(r=>`<button class="${S.meta.reportType===r?'on':''}" data-qrt="${r}">${RT_LABEL[r]}</button>`).join('')}</div><span class="sp"></span>
  <button class="btn pri" id="expWord">⬇ Word</button><button class="btn" id="expPrint">🖨 PDF</button></div></div>
-<div class="card"><h3><span class="qn">3</span>מה חסר ומאיפה משיגים${miss.length?` – ${miss.length} פריטים`:''}</h3>
+<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0"><span class="qn">3</span>מה חסר ומאיפה משיגים${miss.length?` – ${miss.length} פריטים`:''}</h3><button class="btn" id="qLetter">✉ מכתב פנייה לעירייה</button></div>
  ${miss.length?`<p class="small" style="margin-top:0">אלה נתונים שאינם פומביים או שדורשים עבודת שטח. "השלמה" פותחת את המקום בכלי שבו מזינים אותם.</p>`+
  Object.keys(WG).filter(g=>groups[g]).map(g=>`<h4 class="qgrp">${WG[g]}</h4><ul class="qmiss">${groups[g].map(({c,w})=>`<li><b>${esc(c.l)}</b>${w?` <span class="qsrc">– ${esc(w)}</span>`:''} <a href="#" data-go="${c.s}">השלמה ›</a></li>`).join('')}</ul>`).join(''):'<p>✓ כל הפריטים הנדרשים הוזנו.</p>'}
 </div>
 <div class="paper" id="paper">${buildReport(S.meta.reportType)}</div>`;}
+function letterHtml(){const M=S.meta,ur=S.compound.ur,ph=x=>`<span class="gap">[${x}]</span>`,v=(x,l)=>has(x)?esc(x):ph(l);
+ const city=M.city||'',addrs=S.buildings.length?S.buildings.map(bName):[];const d=new Date().toLocaleDateString('he-IL');
+ const place=`${esc(M.name||ur?.ShemMitcham||'')}${city?' ב'+esc(city):''}`;
+ return `<p style="text-align:left">${d}</p>
+<p>לכבוד<br>עיריית ${v(city,'שם העירייה')}<br>אגף ההנדסה · מחלקת הארנונה · אגף הרווחה</p>
+<p><b>הנדון: בקשה לקבלת נתונים לצורך הכנת דו״ח חברתי – מתחם ${place||ph('שם המתחם')}</b></p>
+<p>שלום רב,</p>
+<p>${has(M.consultantOrg)||has(M.consultant)?`${v(M.consultantOrg,'החברה')} משמשת`:'אני משמש/ת'} כיועץ/ת החברתי/ת למיזם ${esc(M.ptype||'ההתחדשות העירונית')} במתחם ${place||ph('שם המתחם')}${ur?` (מס׳ מתחם ${esc(ur.MisparProject)} במאגר משרד הבינוי והשיכון${ur.plan_name?`, תכנית ${esc(ur.plan_name)}`:''})`:''}${has(M.track)?`, ב${esc(M.track)}`:''}. הדו״ח החברתי מוכן לפי <i>מדריך להכנת דו״ח חברתי במיזמי התחדשות עירונית – גרסה 3.0</i> של הרשות הממשלתית להתחדשות עירונית, ומוגש כמסמך רקע למוסדות התכנון.</p>
+<p>לשם כך נבקש לקבל את הנתונים הבאים עבור הכתובות:</p>
+<ul>${addrs.length?addrs.map(a=>`<li>${esc(a)}${city?', '+esc(city):''}</li>`).join(''):`<li>${ph('כתובות המתחם')}</li>`}</ul>
+<p>גושים וחלקות: ${ph('להשלמה')}</p>
+<h4>1. מחלקת הארנונה</h4>
+<ul><li>מספר יחידות הדיור והעסקים בכל בניין.</li><li>שטח כל יחידה (מ״ר) וסיווג (מגורים / עסק).</li><li>לכל בניין: מספר הדירות שבהן המחזיק הוא הבעלים, מספר הדירות המושכרות, ומספר דירות הדיור הציבורי.</li></ul>
+<h4>2. אגף הרווחה</h4>
+<ul><li>לכל בניין: מספר התושבים בני 65 ומעלה ובני 70 ומעלה.</li><li>מספר התושבים עם מוגבלויות.</li><li>מספר משקי הבית המוכרים לשירותי הרווחה.</li><li>איש/אשת קשר לתיאום הליווי החברתי לאורך המיזם.</li></ul>
+<h4>3. אגף ההנדסה</h4>
+<ul><li>תכנית המתאר ומסמכי מדיניות החלים על השכונה (התחדשות עירונית, שטחי ציבור, תחבורה).</li><li>מיזמי בנייה והתחדשות מאושרים ובתכנון ברדיוס של כ־500 מ׳ מהמתחם, עם מספרי יחידות הדיור.</li><li>מוסדות ציבור ושטחים פתוחים קיימים ומתוכננים בסביבה.</li></ul>
+<p>הנתונים מתבקשים <b>ברמת בניין ובאופן מצרפי, ללא פרטים מזהים</b>, וישמשו לצורך הכנת הדו״ח החברתי בלבד.</p>
+<p>נודה לקבלת הנתונים בהקדם. לכל שאלה אשמח לעמוד לרשותכם.</p>
+<p>בברכה,<br>${v(M.consultant,'שם היועץ/ת')}<br>${v(M.consultantOrg,'החברה')}<br>${ph('טלפון ודוא״ל')}</p>`;}
+function letterWord(){const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>פנייה לעירייה</title><style>body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.5}h4{margin:14px 0 4px}.gap{background:#FFF3C4}@page{size:21cm 29.7cm;margin:2.2cm}</style></head><body dir="rtl" lang="he">${letterHtml()}</body></html>`;
+ download(`פנייה לעירייה – ${(S.meta.name||'מתחם').replace(/[\/:*?"<>|]/g,'')}.doc`,new Blob(['﻿',html],{type:'application/msword'}));}
 function goQuick(){cur='quick';if(map){try{map.off();map.remove();}catch(e){}map=null;}document.body.classList.add('quick');
  $('#main').innerHTML=VIEWS.quick();$('#bMode').textContent='עריכה מפורטת ›';a11yTables();initPicker();try{history.replaceState(null,'','#')}catch(e){}}
 function parseAddrLines(txt){const out=[];txt.split(/\n+/).map(l=>l.trim()).filter(Boolean).forEach(l=>{const p=parseCompoundName(l);if(p.length)out.push(...p);else{const m=l.match(/^(.*?)\s+(\d+\S*)$/);out.push(m?{street:m[1],num:m[2]}:{street:l,num:''});}});return out;}
@@ -1270,6 +1292,9 @@ document.addEventListener('click',async e=>{const gc=e.target.closest('[data-gc]
   if(b.id==='unpick'){S.meta.compoundId=null;S.compound.geo=null;S.compound.ur=null;quickStale();save(true);go(home());return;}
   if(b.id==='bMode'){go(cur==='quick'?'project':'quick');return;}
   if(b.id==='qRun'){quickRun();return;}
+  if(b.id==='qLetter'){openModal(`<h3>מכתב פנייה לעירייה</h3><p class="small" style="margin-top:0">הסימונים הצהובים הם פרטים שעדיין חסרים – אפשר להשלים אותם ב"עריכה מפורטת" ← שער ופרטי הפרויקט, או ישירות בקובץ ה־Word.</p><div class="paper" id="letterBox" style="padding:16px;font-size:14px;max-height:52vh;overflow:auto">${letterHtml()}</div><div class="row" style="margin-top:12px"><button class="btn pri" id="letterWord">⬇ Word</button><button class="btn" id="letterCopy">העתקה</button><button class="btn" data-close="1">סגירה</button></div>`);return;}
+  if(b.id==='letterWord'){letterWord();return;}
+  if(b.id==='letterCopy'){const t=$('#letterBox').innerText;try{await navigator.clipboard.writeText(t);toast('המכתב הועתק');}catch(err){const r=document.createRange();r.selectNodeContents($('#letterBox'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast('סמנו והעתיקו (Ctrl+C)');}return;}
   if(b.id==='qAdd'){const t=$('#qAddr').value;if(!t.trim()){toast('הדביקו כתובות, שורה לכל בניין');return;}if(!has(S.meta.city)){toast('הזינו קודם עיר');$('#qCity').focus();return;}const add=parseAddrLines(t).filter(x=>!S.buildings.some(b=>b.street===x.street&&String(b.num)===String(x.num)));add.forEach(x=>S.buildings.push({id:uid(),...x}));quickStale();save(true);goQuick();quickGeocode();return;}
   if(d.qdel!=null){S.buildings.splice(+d.qdel,1);quickStale();save(true);goQuick();return;}
   if(b.id==='qClear'){S.buildings=[];quickStale();save(true);goQuick();return;}
