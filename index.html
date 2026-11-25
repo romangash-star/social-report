@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>מחולל דו״ח חברתי – התחדשות עירונית</title>
+<meta name="description" content="כלי עזר לכתיבת דו״ח חברתי במיזמי התחדשות עירונית לפי מדריך 3.0 של הרשות הממשלתית: בחירת מתחם במפה, מילוי אוטומטי ממקורות פתוחים והפקת טיוטת דו״ח.">
+<meta property="og:title" content="מחולל דו״ח חברתי – התחדשות עירונית">
+<meta property="og:description" content="בחירת מתחם במפה, מילוי אוטומטי ממקורות פתוחים והפקת טיוטת דו״ח חברתי לפי מדריך 3.0.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0C3058">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230C3058'/%3E%3Crect x='5' y='13' width='6' height='14' fill='%2350B0A0'/%3E%3Crect x='13' y='6' width='6' height='21' fill='%23fff'/%3E%3Crect x='21' y='10' width='6' height='17' fill='%2350B0A0'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -167,24 +173,36 @@ header.top .logo{width:30px;height:30px;flex:none}
 .urpop{font-family:'Rubik',sans-serif;font-size:13px;line-height:1.5;direction:rtl;text-align:right}
 .card.picker{border-top:4px solid var(--teal)}
 .disclaimer{font-size:11.5px;opacity:.7}
+.btn.danger{background:#B4532A;color:#fff;border-color:#B4532A}
+:focus-visible{outline:3px solid #50B0A0;outline-offset:1px}
+@media (max-width:860px){
+  header.top{position:static;padding:8px 10px;gap:6px}
+  header.top h1{font-size:16px}header.top .sub{font-size:11.5px;flex-basis:100%;order:2}header.top .sp{display:none}
+  header.top select,header.top button{padding:5px 8px;font-size:13px;order:3}#projSel{max-width:170px}#saveState{order:4;min-width:0}
+  nav.steps{position:sticky;top:0;z-index:900;height:auto}
+  .card{overflow-x:auto}.paper table{display:block;overflow-x:auto;max-width:100%}
+  #pmap{height:340px!important}.selbox{flex-direction:column;align-items:stretch}
+  .navbtns{gap:8px}.navbtns .btn{flex:1;font-size:13px}
+}
 </style>
 </head>
 <body>
 <header class="top">
   <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="12" width="7" height="17" rx="1" fill="#50B0A0"/><rect x="12.5" y="5" width="7" height="24" rx="1" fill="#fff"/><rect x="22" y="9" width="7" height="20" rx="1" fill="#50B0A0"/></svg><h1>מחולל דו״ח חברתי</h1><span class="sub">התחדשות עירונית · לפי מדריך 3.0 של הרשות הממשלתית<br><span class="disclaimer">כלי עזר עצמאי – אינו כלי רשמי של הרשות</span></span>
   <span class="sp"></span>
-  <select id="projSel" title="פרויקטים שמורים"></select>
+  <select id="projSel" title="פרויקטים שמורים" aria-label="פרויקטים שמורים"></select>
   <button id="bNew">+ פרויקט חדש</button>
   <button id="bDemo" title="פרויקט לדוגמה עם נתונים בדויים">דוגמה</button>
   <button id="bExport">⬇ שמירה לקובץ</button>
   <button id="bImport">⬆ טעינה</button>
+  <button id="bDel" title="מחיקת הפרויקט הנוכחי מהדפדפן" aria-label="מחיקת הפרויקט">🗑</button>
   <button id="bSettings">⚙ הגדרות</button>
   <span id="saveState"></span>
   <input type="file" id="importFile" accept=".json,application/json" hidden>
 </header>
-<div class="layout"><nav class="steps" id="nav"></nav><main id="main"></main></div>
-<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
-<div class="toast" id="toast"></div>
+<div class="layout"><nav class="steps" id="nav" aria-label="שלבי הדו״ח"></nav><main id="main"></main></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true"><div class="box" id="modalBox"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 'use strict';
 /* =====================================================================
@@ -313,7 +331,7 @@ function blank(){return{
   meta:{compoundId:null,name:'',city:'',neighborhood:'',statArea:'',track:'',ptype:'',reportType:'מצב קיים',developer:'',planningHead:'',pm:'',consultant:'',consultantOrg:'',date:new Date().toISOString().slice(0,10),startedWork:''},
   src:{muni:{},docs:{},tabu:'',cbs:'',policy:{},other:'',tours:[],interviews:[{role:'רכז/ת חברתי במנהלת'},{role:'עו״ס קהילתי/ת'},{role:'נציגים/ות'},{role:'חברי/ות ועד הבית'}],extra:[]},
   urban:{cmp:{},summary:'',overlap:''}, policy:[], nearby:[], nearbyMeaning:'', futurePop:'', nearbyConcl:'',
-  buildings:[], compound:{boundaries:'',btypes:'',role:'',history:'',physical:'',geo:null,ur:null},
+  buildings:[], compound:{boundaries:'',btypes:'',role:'',history:'',physical:'',geo:null,ur:null,totalUnits:null},
   housing:{cityOwn:null,ilOwn:null,cityRent:null,ilRent:null,phCityShare:null,mix:{},mixRec:{},mixNotes:'',inclusive:'',phCompany:'',phCityStock:'',phSizes:'',rentersText:'',phText:''},
   burden:{rent:{},rentNew:{},price:{},priceNew:{},rate:null,years:30,inc:{d1L:'5',d1:null,d2L:'7',d2:null,city:null,il:null},concl:''},
   pop:{text:'',history:'',eld65:null,eld70:null,disabled:null,welfare:null,phHH:null,residents:null,households:null}, keyPeople:[],
@@ -335,7 +353,7 @@ const index=()=>lsGet(LS_INDEX)||[];
 function deepMerge(base,o){if(o==null||typeof o!=='object'||Array.isArray(o))return o===undefined?base:o;const r=Array.isArray(base)?[]:{...base};for(const k in o){r[k]=(base&&typeof base[k]==='object'&&!Array.isArray(base[k])&&base[k]!==null)?deepMerge(base[k],o[k]):o[k];}return r;}
 let saveTimer=null;
 function save(now){clearTimeout(saveTimer);const doit=()=>{S.updated=new Date().toISOString();const ok=lsSet(LS_PREFIX+S.id,S);const idx=index().filter(p=>p.id!==S.id);idx.unshift({id:S.id,name:S.meta.name||'פרויקט ללא שם',updated:S.updated});lsSet(LS_INDEX,idx);
-  $('#saveState').textContent=ok?'✓ נשמר '+new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}):'⚠ השמירה בדפדפן נכשלה – שמרו לקובץ';renderProjSel();renderNav();};
+  $('#saveState').textContent=ok?'✓ נשמר בדפדפן '+new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+(S.lastExport?'':' · טרם גובה לקובץ'):'⚠ השמירה בדפדפן נכשלה (ייתכן שהתמונות כבדות מדי) – שמרו לקובץ';renderProjSel();renderNav();};
   if(now)doit();else{$('#saveState').textContent='…';saveTimer=setTimeout(doit,500);}}
 function load(id){const p=lsGet(LS_PREFIX+id);if(p){S=deepMerge(blank(),p);go(cur);}}
 
@@ -376,17 +394,17 @@ const isFull=()=>S.meta.reportType==='מלא';
 
 /* ---------------- DERIVED ---------------- */
 function totals(){const b=S.buildings;const sum=k=>b.reduce((s,x)=>s+(n(x[k])||0),0);
-  const units=sum('units'),com=sum('commercial'),signed=sum('signed');const years=b.map(x=>n(x.year)).filter(Boolean);
+  let units=sum('units');const com=sum('commercial'),signed=sum('signed');const unitsEst=!units&&n(S.compound.totalUnits)>0;if(unitsEst)units=n(S.compound.totalUnits);const years=b.map(x=>n(x.year)).filter(Boolean);
   const ten={};TENURE.forEach(t=>ten[t.k]=sum(t.k));const tenSum=TENURE.reduce((s,t)=>s+ten[t.k],0);
   const shared=b.filter(x=>n(x.units)>=4&&x.btype!=='צמוד קרקע').length;
-  return{nb:b.length,units,com,all:units+com,signed,signPct:pct(signed,units),yMin:years.length?Math.min(...years):null,yMax:years.length?Math.max(...years):null,ten,tenSum,atyp:sum('atypical'),shared};}
+  return{nb:b.length,units,com,all:units+com,signed,signPct:pct(signed,units),yMin:years.length?Math.min(...years):null,yMax:years.length?Math.max(...years):null,ten,tenSum,unitsEst,atyp:sum('atypical'),shared};}
 const tenBase=()=>{const t=totals();return t.tenSum||t.all;};
-const ownRate=()=>{const t=totals();return pct(t.ten.ownRes,t.units);};
-const rentRate=()=>{const t=totals();return pct(t.ten.rent,t.units);};
-const phRate=()=>{const t=totals();return pct(t.ten.ph,t.units);};
+const ownRate=()=>{const t=totals();return t.tenSum?pct(t.ten.ownRes,t.units):null;};
+const rentRate=()=>{const t=totals();return t.tenSum?pct(t.ten.rent,t.units):null;};
+const phRate=()=>{const t=totals();return t.tenSum?pct(t.ten.ph,t.units):null;};
 function sampleTarget(){const t=totals();if(!t.all)return null;return{rate:t.units<=100?50:35,n:Math.ceil(t.all*(t.units<=100?0.5:0.35))};}
 function surveyGroups(){const t=totals(),st=sampleTarget(),a=agg();const base=tenBase();
-  return TENURE.map(g=>{const share=pct(t.ten[g.k],base);const tgtN=st&&share!=null?Math.round(st.n*share/100):null;const done=a.N?a.tenure[g.l]||0:0;return{...g,share,tgtN,tgtPct:share,done,donePct:pct(done,a.N)};});}
+  return TENURE.map(g=>{const share=t.tenSum?pct(t.ten[g.k],base):null;const tgtN=st&&share!=null?Math.round(st.n*share/100):null;const done=a.N?a.tenure[g.l]||0:0;return{...g,share,tgtN,tgtPct:share,done,donePct:pct(done,a.N)};});}
 function agg(){const R=S.survey.resp||[];const N=R.length;
   const cnt=(k,opts)=>{const o={};opts.forEach(x=>o[x]=0);R.forEach(r=>{if(r[k]&&o[r[k]]!=null)o[r[k]]++});return o;};
   const yes=k=>R.filter(r=>r[k]==='כן').length;const nums=k=>R.map(r=>n(r[k])).filter(v=>v!=null);
@@ -461,11 +479,13 @@ function renderNav(){let g='',h='';STEPS.forEach((s,i)=>{if(s.g!==g){g=s.g;h+=`<
   h+=`<button class="${s.id===cur?'on':''}" data-go="${s.id}"><span class="num">${i+1}</span><span>${s.t}</span>${sc!=null?`<span class="bar"><i style="width:${Math.round(sc*100)}%"></i></span>`:''}</button>`;});$('#nav').innerHTML=h;}
 function renderProjSel(){const idx=index();$('#projSel').innerHTML=idx.map(p=>`<option value="${p.id}" ${p.id===S.id?'selected':''}>${esc(p.name)}</option>`).join('')||'<option>אין פרויקטים שמורים</option>';}
 let map=null;
-function go(id){cur=id;if(map){map.remove();map=null;}const i=STEPS.findIndex(s=>s.id===id),s=STEPS[i];
+function go(id){cur=id;if(map){try{map.off();map.remove();}catch(e){}map=null;}const i=STEPS.findIndex(s=>s.id===id),s=STEPS[i];
   $('#main').innerHTML=`<div class="row" style="justify-content:space-between"><h2 class="stitle">${i+1}. ${s.t}</h2><span class="pill rt">תוצר: ${RT_LABEL[S.meta.reportType]||''}</span></div><p class="lead">${s.g}</p>${guideBox(id)}${VIEWS[id]()}
   <div class="navbtns noprint">${i>0?`<button class="btn" data-go="${STEPS[i-1].id}">→ ${STEPS[i-1].t}</button>`:'<span></span>'}${i<STEPS.length-1?`<button class="btn pri" data-go="${STEPS[i+1].id}">${STEPS[i+1].t} ←</button>`:''}</div>`;
-  renderNav();if(AFTER[id])AFTER[id]();window.scrollTo(0,0);try{history.replaceState(null,'','#'+id)}catch(e){}}
+  renderNav();a11yTables();if(AFTER[id])AFTER[id]();window.scrollTo(0,0);try{history.replaceState(null,'','#'+id)}catch(e){}}
 
+function a11yTables(){document.querySelectorAll('#main table.t').forEach(tb=>{const hs=[...tb.querySelectorAll('thead th')].map(h=>h.textContent.trim());tb.querySelectorAll('tbody tr').forEach(tr=>{const first=(tr.cells[0]?.textContent||'').trim();[...tr.cells].forEach((td,i)=>td.querySelectorAll('input,select,textarea').forEach(el=>{if(!el.getAttribute('aria-label'))el.setAttribute('aria-label',[hs[i],first&&i?first:''].filter(Boolean).join(' – ')||'שדה');}));});});
+  document.querySelectorAll('#main .btn.ghost.sm[data-del]').forEach(b=>b.setAttribute('aria-label','מחיקת שורה'));}
 /* ---------------- VIEWS ---------------- */
 const VIEWS={},AFTER={};let VIEWS_PICKER=()=>'';
 VIEWS.project=()=>`${VIEWS_PICKER()}
@@ -477,7 +497,6 @@ VIEWS.project=()=>`${VIEWS_PICKER()}
  ${F('meta.developer','יזם / הגוף הציבורי המוביל את התכנון')}${F('meta.planningHead','ראש צוות התכנון (משרד האדריכלים)')}${F('meta.pm','ניהול פרויקט')}
  ${F('meta.consultant','ייעוץ חברתי (שם היועץ/ת)')}${F('meta.consultantOrg','חברה מגישה')}${F('meta.date','תאריך הגשה','date')}${F('meta.startedWork','תחילת עבודת היועץ','date',{hint:'דו״ח מצב קיים מוגש 3–5 חודשים לאחר מכן'})}
 </div>${dueHint()}</div>
-<div class="card" style="border-color:#c9792b"><h3>⚡ איך מתחילים</h3><p style="margin:0">מלאו עיר ומסלול, עברו לשלב 4 והזינו את כתובות המתחם (אפשר להדביק רשימה), ולחצו <b>"מילוי אוטומטי ממקורות פתוחים"</b>. הכלי ימשוך נתונים מהלמ״ס, ממאגר מתחמי ההתחדשות, ממינהל התכנון, ממשרדי החינוך והתחבורה ומ־OpenStreetMap, וימלא את השדות הריקים.</p></div>
 <div class="card"><h3>📄 המדריך</h3><p class="small" style="margin-top:0">הכלי בנוי לפי <b>גרסה 3.0</b> (2026): המסמך המלווה, תבנית הבסיס לדו״ח מצב קיים ותבנית הדו״ח המלא כולל הערכת חלופות.</p>
  <ul>${GUIDE_LINKS.map(l=>`<li><a href="${l.u}" target="_blank" rel="noopener">${l.t}</a> <span class="pill">${l.d}</span></li>`).join('')}</ul></div>`;
 function dueHint(){const d=S.meta.startedWork;if(!d)return'';const s=new Date(d);const a=new Date(s);a.setMonth(a.getMonth()+3);const b=new Date(s);b.setMonth(b.getMonth()+5);return `<div class="note info">חלון הגשת דו״ח מצב קיים: ${a.toLocaleDateString('he-IL')} – ${b.toLocaleDateString('he-IL')}</div>`;}
@@ -535,14 +554,15 @@ VIEWS.compound=()=>{const t=totals();return `
   <td>${cellIn(`buildings.${i}.atypical`,b.atypical,{num:1,w:55})}</td><td>${cellIn(`buildings.${i}.atypNote`,b.atypNote,{ph:'הרחבה, פיצול, סיפוח…'})}</td>
   <td>${b.lat?'<span class="pill ok">✓</span>':`<span class="pill bad">${b.geoErr?'לא נמצא':'—'}</span>`}</td><td><button class="btn ghost sm" data-del="buildings" data-i="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="14" class="small">עדיין לא הוזנו בניינים</td></tr>'}
  </tbody></table></div>
- <div class="kpis" style="margin-top:12px"><div class="kpi"><b>${t.nb}</b><span>מבנים (${t.shared} משותפים)</span></div><div class="kpi"><b>${fmtN(t.units)}</b><span>יחידות דיור</span></div><div class="kpi"><b>${fmtN(t.com)}</b><span>יחידות מסחר/תעסוקה</span></div><div class="kpi"><b>${fmtN(t.all)}</b><span>סך יחידות קנייניות</span></div><div class="kpi"><b>${fmtN(t.atyp)}</b><span>יח״ד לא טיפוסיות</span></div><div class="kpi"><b>${t.shared>10?'מקבצים':'לכל בניין'}</b><span>כרטיסיות בניינים</span></div></div>
+ <div class="kpis" style="margin-top:12px"><div class="kpi"><b>${t.nb}</b><span>מבנים (${t.shared} משותפים)</span></div><div class="kpi"><b>${fmtN(t.units)}</b><span>יחידות דיור${t.unitsEst?' (סה״כ למתחם, ללא פירוט לפי בניין)':''}</span></div><div class="kpi"><b>${fmtN(t.com)}</b><span>יחידות מסחר/תעסוקה</span></div><div class="kpi"><b>${fmtN(t.all)}</b><span>סך יחידות קנייניות</span></div><div class="kpi"><b>${fmtN(t.atyp)}</b><span>יח״ד לא טיפוסיות</span></div><div class="kpi"><b>${t.shared>10?'מקבצים':'לכל בניין'}</b><span>כרטיסיות בניינים</span></div></div>
  <div id="map" class="map" style="margin-top:12px"></div></div>
 <div class="card"><h3>רקע</h3><div class="grid">
+ ${F('compound.totalUnits','סה״כ יח״ד קיימות במתחם','num',{hint:'משמש לחישובים כל עוד לא הוזנו יח״ד לכל בניין בטבלה'})}
  ${F('compound.boundaries','גבולות המתחם / הקו הכחול','textarea')}${F('compound.btypes','סוג המבנים (שיכונים, גן־גג, צמודי קרקע)','textarea',{rows:2})}
  ${F('compound.role','תפקוד המתחם ותפקידו במרחב השכונתי והעירוני','textarea',{ph:'שירותי ציבור/מסחר, מלאי דירות זול, נקודת חיבור…'})}${F('compound.history','היסטוריה: בנייה, אכלוס ושינויים','textarea')}${F('compound.physical','מצב פיזי ותחזוקה (סיור)','textarea')}
 </div></div>
 <div class="card"><h3>תמונות</h3><div class="row noprint" style="margin-bottom:10px"><label class="btn">📷 הוספת תמונות<input type="file" id="photoIn" accept="image/*" multiple hidden></label><span class="small">לשייך תמונה לבניין כדי שתופיע בכרטיסיית הבניין</span></div>
- <div class="photos">${S.photos.map((p,i)=>`<figure><img src="${p.data}" alt=""><input data-p="photos.${i}.caption" value="${esc(p.caption)}" placeholder="כיתוב"><select data-p="photos.${i}.bld" style="width:100%;font-size:12px;margin-top:3px"><option value="">כללי</option>${S.buildings.map(b=>`<option ${p.bld===bName(b)?'selected':''}>${esc(bName(b))}</option>`).join('')}</select><button class="btn ghost sm" data-del="photos" data-i="${i}">הסרה</button></figure>`).join('')}</div></div>`;};
+ <div class="photos">${S.photos.map((p,i)=>`<figure><img src="${esc(p.data)}" alt=""><input data-p="photos.${i}.caption" value="${esc(p.caption)}" placeholder="כיתוב"><select data-p="photos.${i}.bld" style="width:100%;font-size:12px;margin-top:3px"><option value="">כללי</option>${S.buildings.map(b=>`<option ${p.bld===bName(b)?'selected':''}>${esc(bName(b))}</option>`).join('')}</select><button class="btn ghost sm" data-del="photos" data-i="${i}">הסרה</button></figure>`).join('')}</div></div>`;};
 let selB=0;AFTER.compound=()=>drawMap(true);AFTER.project=()=>initPicker();
 
 VIEWS.housing=()=>{const t=totals(),H=S.housing,B=S.burden;const base=tenBase();
@@ -618,8 +638,8 @@ function attKpis(){const a=agg();if(!a.N)return'';return `<div class="kpis" styl
 VIEWS.svc=()=>{const sm=S.env.summary||{},c=S.env.center;return `
 <div class="card"><h3>מיפוי שירותים בטווחי הליכה</h3>
  <p class="small" style="margin:0 0 8px">חיפוש סביב מרכז המתחם (OpenStreetMap) וחישוב <b>מרחק הליכה ברשת הרחובות</b>. סף הבית = עד 7 דקות הליכה (≈560 מ׳). משלים את מיפוי יועצי הפרוגרמה – לא מחליף אותו.</p>
- <div class="row noprint"><label class="small">רדיוס (מ׳) <input type="number" id="radius" value="${S.env.radius||1000}" style="width:80px;border:1px solid var(--line);border-radius:6px;padding:4px"></label><button class="btn pri" id="fetchEnv" ${S.buildings.some(b=>b.lat)?'':'disabled'}>🔎 מיפוי השירותים</button>${S.env.fetchedAt?'<button class="btn" id="instFill">↳ העברת מוסדות ציבור לטבלה</button>':''}<span id="envMsg" class="small"></span></div>
- ${!S.buildings.some(b=>b.lat)?'<div class="note warn">יש לאתר תחילה את הכתובות במפה (שלב 4).</div>':''}
+ <div class="row noprint"><label class="small">רדיוס (מ׳) <input type="number" id="radius" value="${S.env.radius||1000}" style="width:80px;border:1px solid var(--line);border-radius:6px;padding:4px"></label><button class="btn pri" id="fetchEnv" ${S.buildings.some(b=>b.lat)||S.compound.geo?'':'disabled'}>🔎 מיפוי השירותים</button>${S.env.fetchedAt?'<button class="btn" id="instFill">↳ העברת מוסדות ציבור לטבלה</button>':''}<span id="envMsg" class="small"></span></div>
+ ${!S.buildings.some(b=>b.lat)&&!S.compound.geo?'<div class="note warn">יש לבחור מתחם או לאתר כתובות במפה (שלב 1 או 4).</div>':''}
  ${c?`<div class="row" style="margin:8px 0"><a class="btn sm" target="_blank" rel="noopener" href="https://www.govmap.gov.il/?q=${encodeURIComponent(bName(S.buildings[0]||{})+' '+(S.meta.city||''))}">GovMap</a><a class="btn sm" target="_blank" rel="noopener" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${c[0]},${c[1]}">Street View</a><a class="btn sm" target="_blank" rel="noopener" href="https://www.openstreetmap.org/#map=17/${c[0]}/${c[1]}">OSM</a></div>`:''}
  ${S.env.fetchedAt?svcTableHtml(true):''}<div id="map" class="map" style="margin-top:10px"></div></div>
 <div class="card"><h3>מוסדות ציבור – מצב קיים</h3>${listTable('svc.inst',[{k:'name',l:'סוג ושם השירות'},{k:'addr',l:'כתובת'},{k:'alt',l:'נדרש מענה חלופי בתקופת הבנייה',opts:YN},{k:'notes',l:'הערות (שימוש, צרכים)'}],{addL:'מוסד'})}</div>
@@ -697,8 +717,8 @@ VIEWS.report=()=>{const rel=relevantChecks();const miss=rel.filter(c=>!c.ok());r
 /* ---------------- MAP ---------------- */
 const CAT_COLORS={kinder:'#e07b39',school:'#c94f4f',clinic:'#2f8f9d',pharmacy:'#3a9d6b',grocery:'#8a5cc2',food:'#b98a2b',park:'#3e9b3e',worship:'#6d6d6d',community:'#d1497b',bus:'#2c6fbb',rail:'#1c3f73',civic:'#7c5b3a'};
 function drawMap(editable){if(typeof L==='undefined'){$('#map').innerHTML='<div class="note warn">ספריית המפה לא נטענה (נדרש חיבור לאינטרנט).</div>';return;}
-  const pts=S.buildings.filter(b=>b.lat);const c=S.env.center||(pts.length?[pts.reduce((s,b)=>s+b.lat,0)/pts.length,pts.reduce((s,b)=>s+b.lng,0)/pts.length]:[32.08,34.78]);
-  map=L.map('map').setView(c,pts.length?16:12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  const pts=S.buildings.filter(b=>b.lat);const gc=geoCentroid(S.compound.geo);const c=S.env.center||(pts.length?[pts.reduce((s,b)=>s+b.lat,0)/pts.length,pts.reduce((s,b)=>s+b.lng,0)/pts.length]:gc||[32.08,34.78]);
+  map=L.map('map').setView(c,pts.length||gc?16:12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   if(S.compound.geo){try{L.geoJSON(S.compound.geo,{style:{color:'#0C3058',weight:2,dashArray:'5 4',fillColor:'#50B0A0',fillOpacity:.15}}).addTo(map).bindTooltip('גבול המתחם המוכרז');}catch(e){}}
   const grp=[];S.buildings.forEach(b=>{if(!b.lat)return;const p=pct(b.signed,b.units);const col=editable?'#c9792b':p==null?'#999':p>=66?'#2d7a46':p>=40?'#d9a21b':'#b4532a';
     grp.push(L.circleMarker([b.lat,b.lng],{radius:9,color:'#13332b',weight:2,fillColor:col,fillOpacity:.9}).addTo(map).bindTooltip(`${esc(bName(b))} · ${b.units||'?'} יח״ד${p!=null?' · '+p+'% התקשרות':''}`));});
@@ -710,16 +730,12 @@ function drawMap(editable){if(typeof L==='undefined'){$('#map').innerHTML='<div 
 
 /* ---------------- NETWORK ---------------- */
 async function geocodeAll(){const list=S.buildings.filter(b=>!b.lat&&(b.street||b.num));if(!list.length){toast('אין כתובות לאיתור');return;}let ok=0;
-  for(const [i,b] of list.entries()){$('#geoMsg').textContent=`מאתר ${i+1}/${list.length}…`;
-    try{const city=S.meta.city||'';let r=await(await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=1&accept-language=he&street=${encodeURIComponent((b.num||'')+' '+(b.street||''))}&city=${encodeURIComponent(city)}`)).json();
-      if(!r.length){await sleep(1100);r=await(await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=1&q=${encodeURIComponent(`${b.street} ${b.num} ${city}`)}`)).json();}
-      if(r.length){b.lat=+r[0].lat;b.lng=+r[0].lon;b.geoErr=false;ok++;}else b.geoErr=true;}catch(e){b.geoErr=true;}
-    await sleep(1100);}
+  for(const [i,b] of list.entries()){const m=$('#geoMsg');if(m)m.textContent=`מאתר ${i+1}/${list.length}…`;if(i)await sleep(1100);const r=await geocodeOne(b,S.meta.city||'');if(r){b.lat=r.lat;b.lng=r.lng;b.geoErr=false;ok++;}else b.geoErr=true;}
   S.env.center=null;save();go('compound');toast(`אותרו ${ok} מתוך ${list.length}`+(ok<list.length?' – את השאר מקמו בלחיצה על המפה':''),4000);}
-async function fetchEnv(){const pts=S.buildings.filter(b=>b.lat);if(!pts.length)return;const c=[pts.reduce((s,b)=>s+b.lat,0)/pts.length,pts.reduce((s,b)=>s+b.lng,0)/pts.length];
+async function fetchEnv(){const pts=S.buildings.filter(b=>b.lat);const c=pts.length?[pts.reduce((s,b)=>s+b.lat,0)/pts.length,pts.reduce((s,b)=>s+b.lng,0)/pts.length]:geoCentroid(S.compound.geo);if(!c)return;
   const R=n($('#radius').value)||1000;S.env.radius=R;const msg=t=>{const m=$('#envMsg');if(m)m.textContent=t;};msg('שולף שירותים מ־OpenStreetMap…');
-  const q=`[out:json][timeout:60];(${CATS.map(k=>`${k.q}(around:${R},${c[0]},${c[1]});`).join('')});out center tags 600;`;let els=null;
-  for(const ep of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){try{const r=await fetch(ep,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}});if(!r.ok)throw 0;els=(await r.json()).elements||[];break;}catch(e){}}
+  const q=`[out:json][timeout:40];(${CATS.map(k=>`${k.q}(around:${R},${c[0]},${c[1]});`).join('')});out center tags 600;`;let els=null;
+  try{els=await overpass(q,45000);}catch(e){els=null;}
   if(els==null){msg('⚠ שירות המפה אינו זמין כרגע – נסו שוב בעוד דקה');return;}
   const pois=els.map(e=>{const lat=e.lat??e.center?.lat,lng=e.lon??e.center?.lon,cat=classify(e.tags||{});return lat&&cat?{cat,lat,lng,name:e.tags.name||e.tags['name:he']||'',addr:[e.tags['addr:street'],e.tags['addr:housenumber']].filter(Boolean).join(' '),air:hav(c,[lat,lng])}:null}).filter(Boolean);
   const cand=[];CATS.forEach(k=>pois.filter(p=>p.cat===k.k).sort((a,b)=>a.air-b.air).slice(0,3).forEach(p=>cand.push(p)));msg(`נמצאו ${pois.length} שירותים. מחשב מרחקי הליכה…`);let mode='est';
@@ -776,7 +792,7 @@ function buildingCards(){if(!S.buildings.length)return gap('בניינים');con
   const typical=S.buildings.filter(b=>n(b.units)>=4&&b.btype!=='צמוד קרקע'),atyp=S.buildings.filter(b=>!(n(b.units)>=4&&b.btype!=='צמוד קרקע'));
   const card=(title,bs)=>{const u=bs.reduce((s,b)=>s+(n(b.units)||0),0);const ten=TENURE.slice(0,4).map(g=>`${g.l.split(' (')[0]} ${fmtPct(pct(bs.reduce((s,b)=>s+(n(b[g.k])||0),0),u))}`).join(' · ');
     const m=bs.map(b=>n(b.maint)).filter(v=>v!=null);const ph=S.photos.filter(p=>bs.some(b=>bName(b)===p.bld)).slice(0,2);
-    return `<div class="bcard"><div><h4>${esc(title)}</h4><ul><li>יחידות דיור: ${u||'—'}</li><li>זיקה לנכס: ${ten}</li><li>רמת תחזוקה: ${m.length?(Math.round(m.reduce((s,x)=>s+x,0)/m.length*10)/10)+' / 5':gap('תחזוקה')}</li><li>יח״ד לא טיפוסיות: ${bs.reduce((s,b)=>s+(n(b.atypical)||0),0)}${bs.map(b=>b.atypNote).filter(Boolean).length?' – '+esc(bs.map(b=>b.atypNote).filter(Boolean).join('; ')):''}</li></ul></div>${ph.length?ph.map(p=>`<img src="${p.data}">`).join(''):'<div class="ph">תמונה עדכנית של הבניין</div>'}</div>`;};
+    return `<div class="bcard"><div><h4>${esc(title)}</h4><ul><li>יחידות דיור: ${u||'—'}</li><li>זיקה לנכס: ${ten}</li><li>רמת תחזוקה: ${m.length?(Math.round(m.reduce((s,x)=>s+x,0)/m.length*10)/10)+' / 5':gap('תחזוקה')}</li><li>יח״ד לא טיפוסיות: ${bs.reduce((s,b)=>s+(n(b.atypical)||0),0)}${bs.map(b=>b.atypNote).filter(Boolean).length?' – '+esc(bs.map(b=>b.atypNote).filter(Boolean).join('; ')):''}</li></ul></div>${ph.length?ph.map(p=>`<img src="${esc(p.data)}">`).join(''):'<div class="ph">תמונה עדכנית של הבניין</div>'}</div>`;};
   let h='';
   if(typical.length<=10)typical.forEach(b=>h+=card(bName(b),[b]));
   else{const grp={};typical.forEach(b=>{const k=b.street||'אחר';(grp[k]=grp[k]||[]).push(b);});Object.entries(grp).forEach(([k,bs])=>h+=card(`מקבץ: ${k} (${bs.map(b=>b.num).join(', ')})`,bs));}
@@ -792,7 +808,7 @@ function burdenHtml(){const B=S.burden;if(!ROOMS.some(r=>has(B.rent[r.k])||has(B
   const one=(kind,fut,title)=>{const rows=burdenRows(kind,fut);if(!rows.some(r=>r.monthly))return'';const rr=rows.filter(r=>r.monthly);return `<h4>${title}</h4>`+tbl(['חדרים',kind==='rent'?'שכירות ממוצעת':'החזר חודשי (75%, '+(B.years||30)+' שנה)',...inc.map(i=>i.l+(i.v?` (${fmtNIS(i.v)})`:''))],rr.map(r=>[r.l,fmtNIS(r.monthly),...r.ratios.map(p=>({cls:burdenClass(p),v:p==null?'—':p+'% · '+burdenLabel(p)}))]));};
   return one('rent',false,'מצב קיים – שכירות')+one('buy',false,'מצב קיים – רכישה (יד שנייה)')+one('rent',true,'מצב עתידי – שכירות בדירות חדשות')+one('buy',true,'מצב עתידי – רכישת דירה חדשה')+
    `<p class="small">עד 25% מההכנסה – סביר; 25–35% – בינוני; מעל 35% – גבוה.${n(B.rate)?` החזר המשכנתא חושב בריבית ${B.rate}%.`:''}</p>`+para(B.concl,'מסקנות נטל עלות הדיור')+srcLine('נתוני שמאי צוות התכנון | הלמ״ס – הכנסה והוצאה חודשית לתצרוכת של משקי בית');}
-function tenureTable(){const t=totals(),base=tenBase();return tbl(['זיקה לנכס','מספר','שיעור'],TENURE.map(g=>[g.l,fmtN(t.ten[g.k]),fmtPct(pct(t.ten[g.k],base))]));}
+function tenureTable(){const t=totals(),base=tenBase();if(!t.tenSum)return `<p>${gap('התפלגות הזיקה לנכס – נתוני ארנונה / נסחי טאבו')}</p>`;return tbl(['זיקה לנכס','מספר','שיעור'],TENURE.map(g=>[g.l,fmtN(t.ten[g.k]),fmtPct(pct(t.ten[g.k],base))]));}
 function orgBldTable(){const t=totals();return tbl(['כתובת','יח״ד','ד. ציבורי','נציגות מוסמכת','שיעור הסמכה','ייצוג משפטי','ייפוי כוח','חתימות','% חתימות','חתימה ראשונה'],S.buildings.map(b=>[esc(bName(b)),fmtN(b.units),fmtN(b.ph),val(b.repAuth,'הסמכה'),b.repRate!=null&&b.repRate!==''?b.repRate+'%':'—',esc(b.lawyer||'—'),esc(b.poa||'—'),has(b.signed)?fmtN(b.signed):gap('חתימות'),fmtPct(pct(b.signed,b.units)),esc(b.firstSign||'—')]).concat([['<b>סה״כ</b>',`<b>${fmtN(t.units)}</b>`,`<b>${fmtN(t.ten.ph)}</b>`,'','','','',`<b>${fmtN(t.signed)}</b>`,`<b>${fmtPct(t.signPct)}</b>`,'']]));}
 function recsTable(){const full=isFull();if(!S.recs.length)return `<p>${gap('המלצות')}</p>`;const grp=t=>S.recs.filter(r=>(r.type||'חברתית')===t);let i=0;
   const rows=[];['תכנונית','חברתית'].forEach(tp=>{const g=grp(tp);if(!g.length)return;rows.push([{cls:'grp',v:`<b>המלצות/סוגיות ${tp==='תכנונית'?'תכנוניות':'חברתיות'}</b>`},'','','','',''].concat(full?['']:[]));g.forEach(r=>{i++;rows.push([i,esc(r.finding)||gap('ממצא'),esc(r.rec)||gap('המלצה'),esc(r.stage)||gap('שלב'),esc(r.resp)||gap('גורם אחראי'),esc(r.where)||gap('היכן להטמיע')].concat(full?[esc(r.status||'—')]:[]));});});
@@ -826,7 +842,7 @@ function buildReport(rt){const M=S.meta,t=totals(),P=S.pop,O=S.org,a=agg();const
     return cover+execSum()+`<h2>היבטים חברתיים בהערכת חלופות</h2>`+(S.alts.rows.length?tbl(['המלצה חברתית','ביטוי תכנוני',...S.alts.names.map(esc)],S.alts.rows.map(r=>[esc(r.rec)||gap('המלצה'),esc(r.expr)||gap('ביטוי תכנוני'),esc(r.a1)||gap('מענה'),esc(r.a2)||gap('מענה'),esc(r.a3)||'—'])):`<p>${gap('טבלת הערכת חלופות')}</p>`)+
       `<h3>המלצת היועץ החברתי ביחס לחלופות</h3>${para(S.alts.opinion,'חוות דעת')}<p class="small">מסמך פנימי במתכונת תקציר – מוגש לראש צוות התכנון ולמנהלת להתחדשות עירונית.</p>`;}
   let h=cover;
-  h+=`<h2>תקציר</h2>${para(S.summary,'תקציר עד 250 מילים')}${S.photos.filter(p=>!p.bld).slice(0,2).map(p=>`<img class="hero" src="${p.data}">`).join('')}`;
+  h+=`<h2>תקציר</h2>${para(S.summary,'תקציר עד 250 מילים')}${S.photos.filter(p=>!p.bld).slice(0,2).map(p=>`<img class="hero" src="${esc(p.data)}">`).join('')}`;
   h+=`<h2>מילון מונחים</h2>${glossaryHtml()}`;
   h+=execSum();
   h+=`<h2>1. מקורות</h2>${sourcesHtml(full)}<p class="small">בנוסף, המקורות מוצגים לאורך הדו״ח בצמוד לנתונים.</p>`;
@@ -840,7 +856,7 @@ function buildReport(rt){const M=S.meta,t=totals(),P=S.pop,O=S.org,a=agg();const
    <p>סך היחידות הקנייניות במתחם: <b>${fmtN(t.all)}</b> – יחידות דיור ${fmtN(t.units)}; יחידות מסחר/תעסוקה ${fmtN(t.com)}.</p>${para(S.compound.btypes,'סוג המבנים')}
    ${tbl(['כתובת','גוש/חלקה','יח״ד','מסחר','קומות','שנת בנייה','סוג','תחזוקה'],S.buildings.map(b=>[esc(bName(b)),esc(b.parcel||'—'),fmtN(b.units),fmtN(b.commercial),fmtN(b.floors),b.year||'—',esc(b.btype||'—'),b.maint?b.maint+'/5':'—']))}
    <h4>תפקוד המתחם ותפקידו במרחב השכונתי והעירוני</h4>${para(S.compound.role,'תפקוד המתחם במרחב')}${para(S.compound.history)}${srcLine('ניתוח מצב קיים של משרד האדריכלים | נסחי טאבו | GOVMAP | סיור במתחם')}
-   <h3>3.2 דיור וזיקה לנכס</h3><p>שיעור הבעלות (בעלים מתגוררים) הוא ${fmtPct(ownRate())}${has(S.housing.cityOwn)?` – לעומת ${S.housing.cityOwn}% בעיר${has(S.housing.ilOwn)?' ו־'+S.housing.ilOwn+'% בארץ':''}`:''}. שיעור השכירות הוא ${fmtPct(rentRate())}${has(S.housing.cityRent)?` – לעומת ${S.housing.cityRent}% בעיר${has(S.housing.ilRent)?' ו־'+S.housing.ilRent+'% בארץ':''}`:''}.</p>${tenureTable()}
+   <h3>3.2 דיור וזיקה לנכס</h3><p>${t.tenSum?'':gap('שיעורי בעלות ושכירות במתחם')+' '}שיעור הבעלות (בעלים מתגוררים) במתחם: ${fmtPct(ownRate())}${has(S.housing.cityOwn)?` – לעומת ${S.housing.cityOwn}% בעיר${has(S.housing.ilOwn)?' ו־'+S.housing.ilOwn+'% בארץ':''}`:''}. שיעור השכירות במתחם: ${fmtPct(rentRate())}${has(S.housing.cityRent)?` – לעומת ${S.housing.cityRent}% בעיר${has(S.housing.ilRent)?' ו־'+S.housing.ilRent+'% בארץ':''}`:''}.</p>${tenureTable()}
    <h4>תמהיל דיור</h4>${MIX.some(m=>has(S.housing.mix[m.k]))?(()=>{const tot=MIX.reduce((s,x)=>s+(n(S.housing.mix[x.k])||0),0);return tbl(['גודל','יח״ד','שיעור בפועל','שיעור מומלץ (מינהל התכנון)'],MIX.map(m=>[m.l,fmtN(S.housing.mix[m.k]),fmtPct(pct(S.housing.mix[m.k],tot)),has(S.housing.mixRec[m.k])?S.housing.mixRec[m.k]+'%':'—']));})():`<p>${gap('תמהיל גודל יח״ד')}</p>`}${para(S.housing.mixNotes)}${para(S.housing.inclusive)}
    ${t.ten.ph?`<h4>דיור ציבורי</h4><p>שיעור יח״ד בניהול ${esc(S.housing.phCompany||'[החברה המשכנת]')}: ${fmtPct(phRate())}${has(S.housing.phCityShare)?`; ${S.housing.phCityShare}% ממאגר הדיור הציבורי בעיר`:''}${S.housing.phSizes?`; גודל הדירות ${esc(S.housing.phSizes)}`:''}.</p>${full&&phRate()>10?`<h4>הרחבה – דיור ציבורי (מעל 10%)</h4>${para(S.housing.phText,'גודל דירות, מלאי עירוני, יידוע והתקשרות עם החברה המשכנת')}`:''}`:''}
    ${full&&rentRate()>30?`<h4>אפיון שוכרים, משכירים ושוק השכירות (מעל 30% שכירות)</h4>${para(S.housing.rentersText,'אפיון שוכרים ושוק השכירות')}`:''}
@@ -884,7 +900,7 @@ function buildReport(rt){const M=S.meta,t=totals(),P=S.pop,O=S.org,a=agg();const
   h+=`<h2>נספחים</h2>${full&&S.alts.rows.length?`<h3>היבטים חברתיים בהערכת חלופות</h3>${tbl(['המלצה חברתית','ביטוי תכנוני',...S.alts.names.map(esc)],S.alts.rows.map(r=>[esc(r.rec),esc(r.expr),esc(r.a1),esc(r.a2),esc(r.a3)]))}${para(S.alts.opinion)}`:''}
    <h3>כרטיסיות בניינים</h3>${buildingCards()}<h3>מסמכים ואסמכתאות של תהליך ההתארגנות וההתקשרות</h3><p class="small">כתבי הסמכת נציגויות · אסמכתאות ייפויי כוח לייצוג משפטי · תצהיר היקף התקשרות מול החברה היזמית – מצורפים בנפרד.</p>`;
   if(full){h+=`<h3>סיכום תהליך שיתוף הציבור</h3>${S.survey.participation.length?tbl(['תאריך','סוג','נושא','משתתפים','תובנות'],S.survey.participation.map(p=>[esc(p.date),esc(p.type),esc(p.topic),fmtN(p.n),esc(p.insights)])):`<p>${gap('מפגשי שיתוף ציבור')}</p>`}${has(S.survey.orgInsights)?`<h3>סיכום תובנות מתהליך ההתארגנות</h3>${para(S.survey.orgInsights)}`:''}
-    ${S.photos.length?`<h3>תמונות נוספות</h3><div>${S.photos.map(p=>`<figure class="fig"><img src="${p.data}"><figcaption>${esc(p.caption||'')}</figcaption></figure>`).join('')}</div>`:''}`;}
+    ${S.photos.length?`<h3>תמונות נוספות</h3><div>${S.photos.map(p=>`<figure class="fig"><img src="${esc(p.data)}"><figcaption>${esc(p.caption||'')}</figcaption></figure>`).join('')}</div>`:''}`;}
   return h;}
 
 /* ---------------- EXPORT ---------------- */
@@ -893,7 +909,7 @@ const fname=ext=>(('דוח חברתי – '+(S.meta.name||'')+' – '+(S.meta.re
 const REPORT_CSS=`body{font-family:Arial,'Assistant',sans-serif;direction:rtl;font-size:10.5pt;line-height:1.5}h1{font-size:20pt;color:#0C3058;margin:4pt 0}h2{font-size:14.5pt;color:#0C3058;border-bottom:1.5pt solid #50B0A0;margin-top:18pt}h3{font-size:12pt;color:#206070}h4{font-size:11pt}table{border-collapse:collapse;width:100%;margin:5pt 0}th,td{border:1px solid #999;padding:3pt 5pt;text-align:right;vertical-align:top}th{background:#E3F2EF}.gap{background:#fde8e1;color:#a3361f;font-weight:bold}.small,.src{font-size:8.5pt;color:#555}.meta td{border:0}.big{font-size:14pt;font-weight:bold}img{max-width:260px}.b-ok{background:#dff0e3}.b-mid{background:#fdf0cf}.b-high{background:#f8d6cc}.gantt-r td.on{background:#50B0A0}.bcard{border:1px solid #bbb;padding:6pt;margin:6pt 0}.grp{background:#eef2ef}`;
 function exportWord(){const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(S.meta.name)}</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]--><style>${REPORT_CSS}@page{size:21cm 29.7cm;margin:2cm}</style></head><body dir="rtl" lang="he">${buildReport(S.meta.reportType)}</body></html>`;download(fname('doc'),new Blob(['﻿',html],{type:'application/msword'}));}
 function exportHtml(){const html=`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>${esc(S.meta.name)}</title><style>${REPORT_CSS}body{max-width:860px;margin:30px auto;padding:0 20px}</style></head><body>${buildReport(S.meta.reportType)}</body></html>`;download(fname('html'),new Blob([html],{type:'text/html'}));}
-function exportJson(){download(((S.meta.name||'project').replace(/[\\/:*?"<>|]/g,''))+'.social-report-v3.json',new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));toast('קובץ הגיבוי נשמר');}
+function exportJson(){S.lastExport=new Date().toISOString();save(true);download(((S.meta.name||'project').replace(/[\\/:*?"<>|]/g,''))+'.social-report-v3.json',new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));toast('קובץ הגיבוי נשמר');}
 function parseCSV(txt){const rows=[];let row=[],f='',q=false;for(let i=0;i<txt.length;i++){const c=txt[i];if(q){if(c==='"'){if(txt[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}else if(c==='"')q=true;else if(c===','){row.push(f);f='';}else if(c==='\n'){row.push(f);rows.push(row);row=[];f='';}else if(c!=='\r')f+=c;}if(f||row.length){row.push(f);rows.push(row);}return rows.filter(r=>r.some(x=>x.trim()));}
 function importCSV(txt){const rows=parseCSV(txt.replace(/^﻿/,''));if(rows.length<2){toast('הקובץ ריק');return;}const map=rows[0].map(h=>RESP_COLS.find(c=>c.k===h.trim()||c.l===h.trim())?.k||null);let k=0;
   rows.slice(1).forEach(r=>{const o={};map.forEach((m,i)=>{if(m)o[m]=(r[i]||'').trim()});RESP_COLS.filter(c=>c.type==='num').forEach(c=>{if(o[c.k]!==undefined)o[c.k]=n(o[c.k])});S.survey.resp.push(o);k++;});save();go('survey');toast(`יובאו ${k} משיבים`);}
@@ -908,6 +924,18 @@ const GEOM='https://utility.arcgisonline.com/arcgis/rest/services/Geometry/Geome
 const OSRM='https://routing.openstreetmap.de/routed-foot/table/v1/driving/';
 const INCOME_REF={year:2024,d5:18565,d7:25310,il:22555};
 async function jget(u,ms=30000,opt={}){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(u,{...opt,signal:c.signal});if(!r.ok)throw new Error('HTTP '+r.status);const tx=await r.text();try{return JSON.parse(tx)}catch(e){throw new Error('תשובה לא תקינה מהשרת')}}catch(e){throw new Error(e.name==='AbortError'?'פג זמן ההמתנה':e.message)}finally{clearTimeout(t);}}
+const OVERPASS=['https://overpass.kumi.systems/api/interpreter','https://overpass.openstreetmap.fr/api/interpreter','https://overpass-api.de/api/interpreter','https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
+async function overpass(q,ms=30000){const cs=[];try{return await Promise.any(OVERPASS.map(ep=>{const c=new AbortController();cs.push(c);const t=setTimeout(()=>c.abort(),ms);
+  return fetch(ep,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:c.signal}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(j=>{if(!j||!Array.isArray(j.elements))throw new Error('bad');return j.elements;}).finally(()=>clearTimeout(t));}));}
+  catch(e){throw new Error('שרתי OpenStreetMap אינם זמינים כרגע');}finally{setTimeout(()=>cs.forEach(c=>{try{c.abort()}catch(e){}}),0);}}
+const ckf=(res,f,limit=1000,fields)=>jget(`${CK}datastore_search?resource_id=${res}&limit=${limit}&filters=${encodeURIComponent(JSON.stringify(f))}${fields?'&fields='+fields:''}`,45000).then(j=>j.result.records);
+const normCity=x=>String(x||'').replace(/[^א-ת]/g,'').replace(/יי/g,'י').replace(/וו/g,'ו');
+function geoCentroid(g){if(!g)return null;const ring=g.type==='Polygon'?g.coordinates[0]:g.type==='MultiPolygon'?g.coordinates.reduce((a,b)=>b[0].length>a.length?b[0]:a,[]):null;if(!ring||!ring.length)return null;let x=0,y=0;ring.forEach(p=>{x+=p[0];y+=p[1]});return[y/ring.length,x/ring.length];}
+async function geocodeOne(b,city,alt){const tries=[`street=${encodeURIComponent((b.num||'')+' '+(b.street||''))}&city=${encodeURIComponent(city)}`];if(alt&&alt!==city)tries.push(`street=${encodeURIComponent((b.num||'')+' '+(b.street||''))}&city=${encodeURIComponent(alt)}`);tries.push(`q=${encodeURIComponent(`${b.street||''} ${b.num||''}, ${alt||city}`)}`);
+  const cen=geoCentroid(S.compound.geo);
+  for(const[i,t]of tries.entries()){if(i)await sleep(1100);try{const r=await jget(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=1&accept-language=he&addressdetails=1&${t}`,15000);
+    if(r.length&&(r[0].address?.house_number||!b.num)){const lat=+r[0].lat,lng=+r[0].lon;if(cen&&hav(cen,[lat,lng])>700)continue;return{lat,lng,sub:r[0].address?.suburb||r[0].address?.neighbourhood||''};}}catch(e){}}
+  return null;}
 const ckq=(res,q,limit=1000)=>jget(`${CK}datastore_search?resource_id=${res}&limit=${limit}${q?'&q='+encodeURIComponent(q):''}`).then(j=>j.result.records);
 const agsPoint=(base,lat,lng,extra='')=>jget(`${base}/query?f=json&geometry=${lng},${lat}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=false${extra}`);
 async function project(pts,inSR,outSR){if(!pts.length)return[];const g=await jget(`${GEOM}?f=json&inSR=${inSR}&outSR=${outSR}&geometries=${encodeURIComponent(JSON.stringify({geometryType:'esriGeometryPoint',geometries:pts.map(p=>({x:p[0],y:p[1]}))}))}`);return g.geometries.map(p=>[p.x,p.y]);}
@@ -920,22 +948,23 @@ const cmpW=(a,b)=>a==null||b==null?'':a>b+0.5?'גבוה מ':a<b-0.5?'נמוך מ
 function addSrc(title,url,note){if(!S.src.extra.some(s=>s.title===title))S.src.extra.push({title,url,note});}
 
 async function autoFill(){
-  if(!S.buildings.length){toast('הוסיפו תחילה את כתובות המתחם');return;}
+  if(!S.buildings.length&&!S.compound.geo){toast('בחרו מתחם במפה או הוסיפו כתובות');return;}
   if(!S.meta.city){toast('הזינו עיר בשלב 1');return;}
   const log=[],filled=[];const city=S.meta.city.trim();
   openModal(`<h3>⚡ מילוי אוטומטי ממקורות פתוחים</h3><p class="small">ממלא רק שדות ריקים – נתונים שהזנתם לא יידרסו.</p><div id="afLog" class="aflog"></div><div class="row" style="margin-top:12px"><button class="btn pri" data-close="1" id="afClose" disabled>סגירה</button></div>`);
   const L=(st,t)=>{log.push({st,t});const el=$('#afLog');if(el)el.innerHTML=log.map(x=>`<div class="af ${x.st}">${x.st==='ok'?'✓':x.st==='err'?'✗':x.st==='warn'?'!':'…'} ${x.t}</div>`).join('');};
   const step=async(name,fn)=>{L('run',name+'…');try{const m=await fn();log.pop();L(m&&m.warn?'warn':'ok',name+(m&&m.msg?' – '+m.msg:''));}catch(e){log.pop();L('err',name+' – '+e.message);}};
-  let c=null,saAttr=null,soec=null,code=null,sa=null,matched=null,cityRows=null;
+  let c=null,saAttr=null,soec=null,code=null,sa=null,matched=null,cityRows=null,official=null;
 
-  await step('איתור הכתובות במפה (OpenStreetMap)',async()=>{let n0=0;for(const b of S.buildings){if(b.lat||!(b.street||b.num))continue;
-      const r=await jget(`https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=1&accept-language=he&street=${encodeURIComponent((b.num||'')+' '+(b.street||''))}&city=${encodeURIComponent(city)}&addressdetails=1`);
-      if(r.length){b.lat=+r[0].lat;b.lng=+r[0].lon;b.geoErr=false;n0++;const sub=r[0].address?.suburb||r[0].address?.neighbourhood;if(sub)setE('meta.neighborhood',sub,filled,'שכונה');}else b.geoErr=true;await sleep(1100);}
-    const pts=S.buildings.filter(b=>b.lat);if(!pts.length)throw new Error('לא אותרה אף כתובת');c=[pts.reduce((s,b)=>s+b.lat,0)/pts.length,pts.reduce((s,b)=>s+b.lng,0)/pts.length];
-    return{msg:`${pts.length}/${S.buildings.length} כתובות ממוקמות`,warn:pts.length<S.buildings.length};});
+  await step('איתור הכתובות במפה (OpenStreetMap)',async()=>{let first=true;for(const b of S.buildings){if(b.lat||!(b.street||b.num))continue;if(!first)await sleep(1100);first=false;
+      const r=await geocodeOne(b,city);if(r){b.lat=r.lat;b.lng=r.lng;b.geoErr=false;if(r.sub)setE('meta.neighborhood',r.sub,filled,'שכונה');}else b.geoErr=true;}
+    const pts=S.buildings.filter(b=>b.lat);const cen=geoCentroid(S.compound.geo);
+    if(pts.length)c=[pts.reduce((s,b)=>s+b.lat,0)/pts.length,pts.reduce((s,b)=>s+b.lng,0)/pts.length];else if(cen)c=cen;else throw new Error('לא אותרה אף כתובת – מקמו בניין בלחיצה על המפה');
+    if(!S.buildings.length)return{msg:'אין כתובות ברשימה – הנתונים יימשכו לפי מרכז המתחם שנבחר',warn:1};
+    return{msg:`${pts.length}/${S.buildings.length} כתובות ממוקמות${pts.length<S.buildings.length?(pts.length?'':' – ממשיך לפי מרכז המתחם')+'; את השאר אפשר למקם בלחיצה על המפה':''}`,warn:pts.length<S.buildings.length};});
   if(!c){$('#afClose').disabled=false;save(true);return;}
 
-  await step('שיוך לאזור סטטיסטי (הלמ״ס 2022)',async()=>{const cnt={};for(const b of S.buildings.filter(b=>b.lat)){const a=(await agsPoint(AGS_SA,b.lat,b.lng)).features?.[0]?.attributes;if(a){b.sa=a.STAT_2022;cnt[a.STAT_2022]=(cnt[a.STAT_2022]||0)+1;saAttr=saAttr||a;}}
+  await step('שיוך לאזור סטטיסטי (הלמ״ס 2022)',async()=>{const cnt={};const samp=S.buildings.filter(b=>b.lat);if(!samp.length)samp.push({lat:c[0],lng:c[1]});for(const b of samp){const a=(await agsPoint(AGS_SA,b.lat,b.lng)).features?.[0]?.attributes;if(a){b.sa=a.STAT_2022;cnt[a.STAT_2022]=(cnt[a.STAT_2022]||0)+1;saAttr=saAttr||a;}}
     if(!saAttr)throw new Error('לא נמצא א״ס');sa=+Object.entries(cnt).sort((x,y)=>y[1]-x[1])[0][0];code=saAttr.SEMEL_YISHUV;setE('meta.statArea',String(sa),filled,'אזור סטטיסטי');
     return{msg:`א״ס ${Object.keys(cnt).join(', ')} (רובע ${saAttr.ROVA}, תת־רובע ${saAttr.TAT_ROVA})`};});
 
@@ -943,7 +972,7 @@ async function autoFill(){
     S.urban.cmp.ses=S.urban.cmp.ses||{};setE('urban.cmp.ses.sa',soec.eshkol_mad+' (2021)',filled,'אשכול חברתי־כלכלי');return{msg:`אשכול ${soec.eshkol_mad}`};});
 
   await step('מפקד 2022 – א״ס, עיר וכלל ארצי (data.gov.il)',async()=>{
-    cityRows=(await ckq(R_CENSUS,city,400)).filter(x=>!code||+x.LocalityCode===+code);const saRow=cityRows.find(x=>+x.StatArea===+sa),ctRow=cityRows.find(x=>x.StatArea==null||x.StatArea==='');
+    cityRows=code?await ckf(R_CENSUS,{LocalityCode:+code},600):await ckq(R_CENSUS,city,400);const saRow=cityRows.find(x=>+x.StatArea===+sa),ctRow=cityRows.find(x=>x.StatArea==null||x.StatArea==='');official=(ctRow?.LocNameHeb||'').replace(/\*/g,'').trim()||null;
     const ilRow=(await ckq(R_CENSUS,'כלל ארצי',10)).find(x=>/כלל ארצי/.test(x.LocNameHeb||'')&&(x.StatArea==null||x.StatArea===''));
     if(!saRow&&!ctRow)throw new Error('לא נמצאו נתונים ליישוב');
     const put=(k,f,lab)=>{S.urban.cmp[k]=S.urban.cmp[k]||{};[['sa',saRow],['city',ctRow],['il',ilRow]].forEach(([col,row])=>{if(row&&row[f]!=null&&!has(S.urban.cmp[k][col]))S.urban.cmp[k][col]=lab?`${row[f]} ${lab}`:row[f];});};
@@ -961,7 +990,7 @@ async function autoFill(){
     }
     return{msg:`א״ס ${saRow?'✓':'—'} · עיר ${ctRow?'✓':'—'} · ארץ ${ilRow?'✓':'—'}`};});
 
-  await step('מאגר מתחמי ההתחדשות העירונית (משרד הבינוי)',async()=>{const recs=(await ckq(R_URBAN,city,1000)).map(trimR).filter(x=>x.Yeshuv===city);
+  await step('מאגר מתחמי ההתחדשות העירונית (משרד הבינוי)',async()=>{const recs=code?(await ckf(R_URBAN,{SemelYeshuv:+code},1000)).map(trimR):(await ckq(R_URBAN,city,1000)).map(trimR).filter(x=>normCity(x.Yeshuv)===normCity(city));
     const streets=[...new Set(S.buildings.map(b=>(b.street||'').trim()).filter(Boolean))],nums=S.buildings.map(b=>parseInt(b.num)).filter(x=>!isNaN(x));
     const score=r=>{if(S.meta.compoundId&&String(r.MisparMitham)===String(S.meta.compoundId))return 1000;const nm=r.ShemMitcham||'';if(!streets.some(s=>nm.includes(s)))return 0;let sc=1;const rng=[...nm.matchAll(/(\d+)\s*[-–]\s*(\d+)/g)].map(m=>[+m[1],+m[2]]);const single=[...nm.matchAll(/\d+/g)].map(m=>+m[0]);
       nums.forEach(n=>{if(rng.some(([a,b])=>n>=a&&n<=b)||single.includes(n))sc+=2;});return sc;};
@@ -973,6 +1002,7 @@ async function autoFill(){
     setE('org.startYear',yr?+yr:null,filled);if(/רשויות/.test(r.Maslul))setE('org.source','גורם ציבורי',filled);
     setE('compound.boundaries',`מתחם "${r.ShemMitcham}" ב${city} (מס׳ מתחם ${r.MisparMitham} במאגר מתחמי ההתחדשות העירונית).${r.TaarichHachraza?` הוכרז ב־${r.TaarichHachraza}`:''}${r.Maslul?` במסלול ${r.Maslul}`:''}; סטטוס: ${r.Status||'—'}${r.MisparTochnit?` (תכנית ${r.MisparTochnit})`:''}. לפי המאגר: ${r.YachadKayam||'—'} יח״ד קיימות, ${r.YachadTosafti||'—'} תוספתיות ו־${r.YachadMutza||'—'} בסך הכול. [להשלמה: גושים וחלקות, גבולות הקו הכחול]`,filled,'גבולות ורקע המתחם');
     setE('org.process',`המתחם הוכרז כמתחם התחדשות עירונית${r.Maslul?' במסלול '+r.Maslul:''}${r.TaarichHachraza?' ב־'+r.TaarichHachraza:''} (מאגר משרד הבינוי). [להשלמה: נציגויות, ייצוג משפטי, יזמים ושיעורי התקשרות – מהמנהלת ומהנציגויות]`,filled);
+    {const u1=n(S.compound.ur?.yachadKayamRashut),u2=n(r.YachadKayam);if(u1&&u2&&u1!==u2&&!/פער בנתוני/.test(S.compound.boundaries||''))S.compound.boundaries=(S.compound.boundaries||'')+` פער בנתוני יח״ד קיימות: ${u1} בשכבת המתחמים לעומת ${u2} במאגר הטבלאי של משרד הבינוי – לאמת מול המנהלת.`;if(!has(S.compound.totalUnits)&&(u2||u1))S.compound.totalUnits=u2||u1;}
     addSrc(`מאגר מתחמי התחדשות עירונית – מתחם ${r.MisparMitham}`,'https://data.gov.il/dataset/urban_renewal',`${r.Status||''}; ${r.YachadKayam||'?'} יח״ד קיימות`);
     return{msg:`נמצא: ${r.ShemMitcham} (${r.Status||''}, ${r.YachadKayam||'?'} יח״ד)`};});
 
@@ -995,10 +1025,10 @@ async function autoFill(){
   let pois=[];
   await step('מוסדות חינוך, גני ילדים ותחנות (data.gov.il) + מרחקי הליכה',async()=>{
     const [[X0,Y0]]=await project([[c[1],c[0]]],4326,2039);const d=(x,y)=>Math.hypot(x-X0,y-Y0);
-    const [sch,kg,bus]=await Promise.all([ckq(R_SCHOOLS,city,3000),ckq(R_KG,city,3000),ckq(R_BUS,city,3000)]);
-    const S1=sch.filter(x=>x.X&&(x.ISV_SHEM_ISHUV||'').includes(city)).map(x=>({name:x.SHEM_MOSAD,t:x.TEUR_SHLAV_HINUH||'',x:+x.X,y:+x.Y,air:d(+x.X,+x.Y)}));
-    const K1=kg.filter(x=>x.X&&(x.SETL_NAME||'').includes(city)).map(x=>({name:(x.NAME||'').replace(/^גן ילדים\s*-\s*/,''),x:+x.X,y:+x.Y,air:d(+x.X,+x.Y)}));
-    const B1=bus.filter(x=>(x.CityName||'').includes(city)&&x.Lat).map(x=>({name:'תחנה '+x.StationId,lat:+x.Lat,lng:+x.Long,air:hav(c,[+x.Lat,+x.Long])}));
+    if(!code)throw new Error('לא זוהה סמל יישוב');const [sch,kg,bus]=await Promise.all([ckf(R_SCHOOLS,{SEMEL_ISHUV_PNIM:+code},20000,'SHEM_MOSAD,TEUR_SHLAV_HINUH,X,Y'),ckf(R_KG,{SETL_CODE:+code},20000,'NAME,X,Y'),ckf(R_BUS,{CityCode:+code},20000,'StationId,Lat,Long')]);
+    const S1=sch.filter(x=>+x.X>0).map(x=>({name:x.SHEM_MOSAD,t:x.TEUR_SHLAV_HINUH||'',x:+x.X,y:+x.Y,air:d(+x.X,+x.Y)}));
+    const K1=kg.filter(x=>+x.X>0).map(x=>({name:(x.NAME||'').replace(/^גן ילדים\s*-\s*/,''),x:+x.X,y:+x.Y,air:d(+x.X,+x.Y)}));
+    const B1=bus.filter(x=>+x.Lat>0).map(x=>({name:'תחנה '+x.StationId,lat:+x.Lat,lng:+x.Long,air:hav(c,[+x.Lat,+x.Long])}));
     const near=(a,k)=>a.sort((p,q)=>p.air-q.air).slice(0,k);
     const elem=near(S1.filter(x=>/יסודי/.test(x.t)),3).map(x=>({...x,cat:'school'})),high=near(S1.filter(x=>/חט"ב|עליונה/.test(x.t)),2).map(x=>({...x,cat:'school',hi:1}));
     const kids=near(K1.length?K1:S1.filter(x=>/גן ילדים/.test(x.t)),3).map(x=>({...x,cat:'kinder'})),bs=near(B1,3).map(x=>({...x,cat:'bus'}));
@@ -1016,8 +1046,7 @@ async function autoFill(){
 
   await step('שירותים נוספים – OpenStreetMap (מרפאות, גינות, מסחר, בתי תפילה)',async()=>{
     const ks=['clinic','pharmacy','grocery','park','worship','community','rail','food','civic'];const q=`[out:json][timeout:25];(${CATS.filter(k=>ks.includes(k.k)).map(k=>`${k.q}(around:1000,${c[0]},${c[1]});`).join('')});out center tags 400;`;
-    let els=null,last='';for(const ep of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){try{els=(await jget(ep,30000,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}})).elements;break;}catch(e){last=e.message;}}
-    if(!els)return{msg:'השרת אינו זמין כרגע ('+last+') – אפשר לנסות שוב בשלב "שירותים"',warn:1};
+    let els=null;try{els=await overpass(q);}catch(e){return{msg:e.message+' – אפשר לנסות שוב מאוחר יותר בשלב "שירותים"',warn:1};}
     const P=els.map(e=>{const lat=e.lat??e.center?.lat,lng=e.lon??e.center?.lon,cat=classify(e.tags||{});return lat&&cat?{cat,lat,lng,name:e.tags.name||'',air:hav(c,[lat,lng])}:null}).filter(Boolean);
     const cand=[];ks.forEach(k=>P.filter(p=>p.cat===k).sort((a,b)=>a.air-b.air).slice(0,2).forEach(p=>cand.push(p)));await walkDist(c,cand);
     ks.forEach(k=>{const all=P.filter(p=>p.cat===k);const b=cand.filter(p=>p.cat===k).sort((x,y)=>x.walk-y.walk)[0];S.env.summary[k]={count:all.length,name:b?(b.name||'ללא שם'):'',dist:b?b.walk:null,est:!!b?.est};});
@@ -1026,13 +1055,13 @@ async function autoFill(){
     return{msg:`${P.length} שירותים`};});
 
   await step('מלאי הדיור הציבורי בעיר (משרד הבינוי)',async()=>{const p=await jget(`${CK}package_show?id=diurtziburi`);const r=p.result.resources.find(x=>x.datastore_active&&/מלאי/.test(x.name));if(!r)throw new Error('המשאב לא נמצא');
-    const rows=(await ckq(r.id,city,200)).filter(x=>(x.CityLMSName||'').includes(city));if(!rows.length)return{msg:'אין נתונים ליישוב',warn:1};const sm=k=>rows.reduce((s,x)=>s+(+x[k]||0),0);
+    const want=[normCity(city),normCity(official)].filter(Boolean);const rows=(await ckq(r.id,'',5000)).filter(x=>want.includes(normCity(x.CityLMSName)));if(!rows.length)return{msg:'אין דירות דיור ציבורי רשומות ביישוב במאגר',warn:1};const sm=k=>rows.reduce((s,x)=>s+(+x[k]||0),0);
     const by=[['OneRooms','חדר אחד'],['TwoRooms','2 חד׳'],['ThreeRooms','3 חד׳'],['FourRooms','4 חד׳']].map(([k,l])=>[l,sm(k)]);const big=['FiveRooms','SixRooms','SevenRooms','EightRooms','NineRooms','TenRooms','MoreRooms'].reduce((s,k)=>s+sm(k),0);const tot=by.reduce((s,x)=>s+x[1],0)+big;
     setE('housing.phText',`מלאי הדיור הציבורי ב${city}: כ־${fmtN(tot)} דירות (משרד הבינוי והשיכון) – ${by.map(([l,v])=>`${v} בנות ${l}`).join(', ')}${big?` ו־${big} גדולות יותר`:''}. [להשלמה: דירות הדיור הציבורי במתחם והחברה המנהלת – נסחי טאבו והחברה המשכנת]`,filled,'דיור ציבורי בעיר');
     addSrc('משרד הבינוי והשיכון – מלאי הדיור הציבורי','https://data.gov.il/dataset/diurtziburi',`${city}: כ־${tot} דירות`);return{msg:`${fmtN(tot)} דירות בעיר`};});
 
   await step('אוכלוסייה ותמונת גילאים בא״ס + הכנסות לפי עשירון',async()=>{
-    if(soec){const a=soec;const s65=(a.age_65_69||0)+(a.age_70_74||0)+(a.age_75_79||0)+(a.age_80_84||0)+(a.age_85_up||0),s70=s65-(a.age_65_69||0);const u=totals().units||n(matched?.YachadKayam);const hs=n(S.urban.cmp.hh?.sa);
+    if(soec){const a=soec;const s65=(a.age_65_69||0)+(a.age_70_74||0)+(a.age_75_79||0)+(a.age_80_84||0)+(a.age_85_up||0),s70=s65-(a.age_65_69||0);const u=totals().units||n(matched?.YachadKayam)||n(S.compound.ur?.yachadKayamRashut);const hs=n(S.urban.cmp.hh?.sa);
       setE('pop.text',`נתונים ברמת המתחם טרם התקבלו מהעירייה. כקירוב, בא״ס ${sa}: ${fmtPct(pct(s65,a.Pop_Total))} בני 65+ ו־${fmtPct(pct(s70,a.Pop_Total))} בני 70+ (${s70} מתוך ${fmtN(a.Pop_Total)}).${u&&hs?` בהינתן ${u} יח״ד וגודל משק בית ממוצע של ${hs}, אוכלוסיית המתחם מוערכת בכ־${fmtN(Math.round(u*hs))} תושבים, ומהם כ־${Math.round(u*hs*s65/a.Pop_Total)} בני 65+ (הערכה בלבד).`:''} [להשלמה: נתוני רווחה וארנונה ברמת המתחם]`,filled,'אפיון אוכלוסייה (הערכה)');}
     setE('burden.inc.d1',INCOME_REF.d5,filled,'הכנסות לפי עשירון');setE('burden.inc.d2',INCOME_REF.d7,filled);setE('burden.inc.il',INCOME_REF.il,filled);
     setE('src.cbs','הלמ״ס – מפקד האוכלוסין והדיור 2022 לפי יישובים וא״ס (data.gov.il); שכבת אזורים סטטיסטיים 2022; מדד חברתי־כלכלי 2021 לפי א״ס; סקר הוצאות משק הבית 2024 (הכנסה נטו לפי עשירון)',filled);
@@ -1048,8 +1077,9 @@ const MOCH_UR='https://services6.arcgis.com/I08Ekaykft5ELucH/arcgis/rest/service
 const UR_STATUS={1:'תכנון ראשוני',2:'תכנון סטטוטורי',3:'תכנית מאושרת לפני מימוש',4:'תכנית מאושרת במימוש'};
 const UR_COLOR={1:'#50B0A0',2:'#2F7FB0',3:'#D9822B',4:'#7A4FB5',0:'#8A949C'};
 let UR=null,urLayer=null;
-async function loadUR(){if(UR)return UR;const j=await jget(`${MOCH_UR}/query?f=geojson&where=1%3D1&outFields=MisparProject,ShemMitcham,Yeshuv,plan_name,TeurSugMaslul,codeStatusHarashut,yachadKayamRashut,yachadMutzaRashut,YachadTosafti&outSR=4326&geometryPrecision=5&maxAllowableOffset=0.00003&resultRecordCount=1000`,45000);
-  j.features.forEach(f=>{const p=f.properties;for(const k in p)if(typeof p[k]==='string')p[k]=p[k].trim();});UR=j;return UR;}
+async function loadUR(){if(UR)return UR;const base=`${MOCH_UR}/query?f=geojson&where=1%3D1&outFields=MisparProject,ShemMitcham,Yeshuv,plan_name,TeurSugMaslul,codeStatusHarashut,yachadKayamRashut,yachadMutzaRashut,YachadTosafti&outSR=4326&geometryPrecision=5&maxAllowableOffset=0.00003&orderByFields=OBJECTID&resultRecordCount=1000`;
+  const all=[];for(let off=0;off<10000;off+=1000){const j=await jget(base+'&resultOffset='+off,45000);const f=(j.features||[]).filter(x=>x.geometry);all.push(...f);if((j.features||[]).length<1000)break;}
+  all.forEach(f=>{const p=f.properties;for(const k in p)if(typeof p[k]==='string')p[k]=p[k].trim();});UR={type:'FeatureCollection',features:all};return UR;}
 function urPopup(p){return `<div class="urpop"><b>${esc(p.ShemMitcham)}</b><br>${esc(p.Yeshuv)} · מתחם ${p.MisparProject}<br>מסלול: ${esc(p.TeurSugMaslul||'—')}<br>סטטוס: ${UR_STATUS[p.codeStatusHarashut]||'לא ידוע'}<br>יח״ד קיימות: ${esc(p.yachadKayamRashut||'—')} · מוצעות: ${esc(p.yachadMutzaRashut||'—')}${p.plan_name?`<br>תכנית: ${esc(p.plan_name)}`:''}<br><button class="btn pri sm" data-pickur="${p.MisparProject}" style="margin-top:6px">בחירת מתחם זה</button></div>`;}
 function inRing(pt,ring){let ins=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const[xi,yi]=ring[i],[xj,yj]=ring[j];if(((yi>pt[1])!==(yj>pt[1]))&&(pt[0]<(xj-xi)*(pt[1]-yi)/(yj-yi)+xi))ins=!ins;}return ins;}
 function inGeom(lng,lat,g){if(!g)return false;const polys=g.type==='Polygon'?[g.coordinates]:g.type==='MultiPolygon'?g.coordinates:[];return polys.some(p=>inRing([lng,lat],p[0])&&!p.slice(1).some(h=>inRing([lng,lat],h)));}
@@ -1060,20 +1090,20 @@ function parseCompoundName(name){/* "ההסתדרות 197-207" / "רבי עקי�
   return out.length&&out.length<=40?out:[];}
 async function osmAddressesIn(geom){const ring=(geom.type==='Polygon'?geom.coordinates[0]:geom.coordinates[0][0]);const poly=ring.map(([x,y])=>`${y.toFixed(6)} ${x.toFixed(6)}`).join(' ');
   const q=`[out:json][timeout:25];(way["building"]["addr:housenumber"](poly:"${poly}");node["addr:housenumber"](poly:"${poly}"););out tags center;`;
-  for(const ep of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){try{const j=await jget(ep,30000,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
-    const seen=new Set(),res=[];j.elements.forEach(e=>{const st=e.tags['addr:street'],nm=e.tags['addr:housenumber'];if(!st||!nm)return;const k=st+'|'+nm;if(seen.has(k))return;seen.add(k);res.push({street:st,num:nm,lat:e.lat??e.center?.lat,lng:e.lon??e.center?.lon});});
-    return res.sort((a,b)=>a.street.localeCompare(b.street,'he')||parseInt(a.num)-parseInt(b.num));}catch(e){}}return null;}
+  try{const els=await overpass(q);const seen=new Set(),res=[];els.forEach(e=>{const st=e.tags['addr:street'],nm=e.tags['addr:housenumber'];if(!st||!nm)return;const k=st+'|'+nm;if(seen.has(k))return;seen.add(k);res.push({street:st,num:nm,lat:e.lat??e.center?.lat,lng:e.lon??e.center?.lon});});
+    return res.sort((a,b)=>a.street.localeCompare(b.street,'he')||parseInt(a.num)-parseInt(b.num));}catch(e){return null;}}
 async function pickCompound(id){if(!UR)return;const f=UR.features.find(x=>String(x.properties.MisparProject)===String(id));if(!f)return;const p=f.properties;
   S.meta.compoundId=p.MisparProject;S.compound.geo=f.geometry;S.compound.ur=p;S.meta.name=p.ShemMitcham;S.meta.city=p.Yeshuv;S.env.center=null;
   if(/רשויות/.test(p.TeurSugMaslul||''))S.meta.track='מסלול רשויות';else if(/מיסוי/.test(p.TeurSugMaslul||''))S.meta.track='מסלול מיסוי';
   if(!has(S.meta.ptype))S.meta.ptype='פינוי־בינוי';
+  S.compound.totalUnits=n(p.yachadKayamRashut);S.buildings.forEach(b=>{b.sa=null;});
   if(!has(S.compound.boundaries)||/^מתחם "/.test(S.compound.boundaries))S.compound.boundaries=`מתחם "${p.ShemMitcham}" ב${p.Yeshuv} (מס׳ מתחם ${p.MisparProject}, שכבת מתחמי פינוי־בינוי מוכרזים של משרד הבינוי והשיכון). מסלול: ${p.TeurSugMaslul||'—'}; סטטוס: ${UR_STATUS[p.codeStatusHarashut]||'—'}${p.plan_name?`; תכנית ${p.plan_name}`:''}. יח״ד קיימות: ${p.yachadKayamRashut||'—'}; מוצעות: ${p.yachadMutzaRashut||'—'}${p.YachadTosafti?` (תוספת ${p.YachadTosafti})`:''}. [להשלמה: גושים וחלקות; אימות גבולות הקו הכחול]`;
   let msg='המתחם נבחר';
   if(!S.buildings.length){const parsed=parseCompoundName(p.ShemMitcham);
     if(parsed.length){parsed.forEach(b=>S.buildings.push({id:uid(),...b}));msg=`נוספו ${parsed.length} כתובות לפי שם המתחם – לאמת`;}
     else{toast('מחפש כתובות בתוך גבולות המתחם (OpenStreetMap)…',4000);const a=await osmAddressesIn(f.geometry);
       if(a&&a.length){a.slice(0,60).forEach(b=>S.buildings.push({id:uid(),...b}));msg=`נוספו ${Math.min(a.length,60)} כתובות מתוך גבולות המתחם – לאמת`;}
-      else msg='לא נמצאו כתובות אוטומטית – לחצו על הבניינים במפה כדי להוסיף אותם';}}
+      else msg='לא נמצאו כתובות אוטומטית – אפשר להמשיך למילוי אוטומטי לפי מרכז המתחם, או ללחוץ על בניינים במפה כדי להוסיף אותם';}}
   save(true);go('project');toast(msg,5000);}
 async function revGeocode(lat,lng){const r=await jget(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=he&zoom=18&addressdetails=1`,15000);const a=r.address||{};
   return{street:a.road||a.pedestrian||a.residential||'',num:a.house_number||'',city:a.city||a.town||a.village||'',sub:a.suburb||a.neighbourhood||'',display:r.display_name||''};}
@@ -1089,7 +1119,7 @@ VIEWS_PICKER=()=>{const sel=S.compound.ur;return `
   S.buildings.length?`<div class="selbox"><div><b>${S.buildings.length} כתובות ברשימה</b> (ללא מתחם מוכרז נבחר)</div><div class="row"><button class="btn sm" data-go="compound">עריכת הכתובות</button><button class="btn pri sm" id="pickAuto">⚡ מילוי אוטומטי ממקורות פתוחים</button></div></div>`:''}
 </div>`;};
 async function initPicker(){const el=$('#pmap');if(!el)return;if(typeof L==='undefined'){el.innerHTML='<div class="note warn">ספריית המפה לא נטענה (נדרש חיבור לאינטרנט).</div>';return;}
-  el.innerHTML='';map=L.map('pmap',{preferCanvas:true}).setView([31.95,34.85],9);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap · מתחמים: משרד הבינוי והשיכון'}).addTo(map);
+  el.innerHTML='';map=L.map('pmap').setView([31.95,34.85],9);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap · מתחמים: משרד הבינוי והשיכון'}).addTo(map);
   const m0=map;const bl=L.layerGroup().addTo(map);S.buildings.filter(b=>b.lat).forEach(b=>L.circleMarker([b.lat,b.lng],{radius:6,color:'#0C3058',weight:2,fillColor:'#fff',fillOpacity:1}).addTo(bl).bindTooltip(esc(bName(b))));
   map.on('click',e=>showPointPopup(e.latlng,urAt(e.latlng.lat,e.latlng.lng)));
   try{await loadUR();}catch(e){const n=document.createElement('div');n.className='note warn';n.textContent='טעינת שכבת המתחמים נכשלה ('+e.message+'). אפשר עדיין לבחור כתובות על המפה.';el.parentNode.insertBefore(n,el);return;}
@@ -1116,11 +1146,11 @@ async function addrSearchGo(){const q=$('#addrSearch').value.trim();if(!q||!map)
   L.popup().setLatLng([lat,lng]).setContent(`<div class="urpop"><b>${esc(a.road||'')} ${esc(a.house_number||'')}</b>, ${esc(window._rev.city)}${f?`<br>בתוך מתחם: <b>${esc(f.properties.ShemMitcham)}</b> <button class="btn sm" data-pickur="${f.properties.MisparProject}">בחירת המתחם</button>`:'<br><span class="small">הכתובת אינה בתוך מתחם מוכרז</span>'}<br>${a.road&&a.house_number?'<button class="btn pri sm" data-addrev="1" style="margin-top:6px">הוספה לרשימת הבניינים</button>':''}</div>`).openOn(map);}catch(e){toast('החיפוש נכשל: '+e.message);}}
 
 /* ---------------- EVENTS ---------------- */
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='addrSearch')addrSearchGo();});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='addrSearch')addrSearchGo();if(e.key==='Escape'&&$('#modal').classList.contains('on')&&!($('#afClose')&&$('#afClose').disabled))closeModal();});
 document.addEventListener('input',e=>{if(e.target.id==='urSearch'){urSearch(e.target.value);return;}const el=e.target,p=el.dataset.p;if(!p)return;let v=el.value;if(el.dataset.num)v=v===''?null:+v;setP(p,v);
   if(/^buildings\.\d+\.(street|num)$/.test(p)){const b=S.buildings[+p.split('.')[1]];if(b){b.lat=null;b.lng=null;}}
   if(p==='summary'){const w=words(v);const wc=$('#wc');if(wc){wc.textContent=w+' / 250 מילים';wc.classList.toggle('over',w>250);}}save();});
-const REFRESH=/^(buildings\.\d+\.(units|signed|commercial|ownRes|ownNon|rent|ph|biz|atypical)|pop\.|housing\.|burden\.)/;
+const REFRESH=/^(buildings\.\d+\.(units|signed|commercial|ownRes|ownNon|rent|ph|biz|atypical)|pop\.|housing\.|burden\.|compound\.totalUnits)/;
 document.addEventListener('focusout',e=>{const p=e.target.dataset?.p;if(!p||!REFRESH.test(p))return;if(e.relatedTarget&&/^(BUTTON|A|LABEL)$/.test(e.relatedTarget.tagName))return;
   const y=window.scrollY,rel=e.relatedTarget?.dataset?.p;setTimeout(()=>{go(cur);window.scrollTo(0,y);const nx=rel&&document.querySelector(`[data-p="${CSS.escape(rel)}"]`);if(nx)nx.focus();},0);});
 document.addEventListener('change',e=>{const el=e.target;
@@ -1166,6 +1196,8 @@ document.addEventListener('click',async e=>{const gc=e.target.closest('[data-gc]
   if(b.id==='sumAuto'){S.summary=autoSummary();save();go('summary');return;}
   if(b.id==='sumAI'){const m=$('#aimsg');m.textContent='כותב…';try{S.summary=await askClaude('כתוב תקציר לדו"ח החברתי (עד 250 מילים, פסקה אחת או שתיים) המציג את המתחם מנקודת המבט המקצועית של היועץ החברתי: הסוגיות המרכזיות, החוזקות, החסמים והכיוונים להמלצות.',compactData());save();go('summary');}catch(err){m.textContent='⚠ '+err.message;}return;}
   if(b.id==='expWord'){exportWord();return;}if(b.id==='expHtml'){exportHtml();return;}if(b.id==='expPrint'){window.print();return;}
+  if(b.id==='delExport'){exportJson();return;}
+  if(b.id==='delOk'){clearTimeout(saveTimer);try{localStorage.removeItem(LS_PREFIX+S.id);}catch(e){}const idx=index().filter(p=>p.id!==S.id);lsSet(LS_INDEX,idx);closeModal();const nx=idx.length&&lsGet(LS_PREFIX+idx[0].id);S=nx?deepMerge(blank(),nx):blank();renderProjSel();$('#saveState').textContent='';go('project');toast('הפרויקט נמחק');return;}
   if(d.close){closeModal();return;}
   if(b.id==='setOk'){settings.apiKey=$('#sKey').value.trim();settings.model=$('#sModel').value.trim()||'claude-sonnet-5-5';CATS.forEach(c=>{const v=n($('#th_'+c.k).value);if(v)settings.th[c.k]=v;else delete settings.th[c.k];});lsSet(LS_SETTINGS,settings);closeModal();go(cur);toast('ההגדרות נשמרו');return;}
 });
@@ -1201,6 +1233,7 @@ function demo(){const d=blank();
 /* ---------------- INIT ---------------- */
 $('#bNew').onclick=()=>{save(true);S=blank();save(true);go('project');toast('נפתח פרויקט חדש');};
 $('#bDemo').onclick=()=>{save(true);S=demo();save(true);go('project');toast('נטען פרויקט לדוגמה (נתונים בדויים)');};
+$('#bDel').onclick=()=>openModal(`<h3>מחיקת הפרויקט</h3><p>למחוק את הפרויקט "<b>${esc(S.meta.name||'פרויקט ללא שם')}</b>" מהדפדפן הזה? אי אפשר לבטל את הפעולה. מומלץ לשמור קודם לקובץ.</p><div class="row"><button class="btn" id="delExport">⬇ שמירה לקובץ</button><button class="btn danger" id="delOk">מחיקה</button><button class="btn" data-close="1">ביטול</button></div>`);
 $('#bExport').onclick=exportJson;$('#bImport').onclick=()=>$('#importFile').click();
 $('#projSel').onchange=e=>{save(true);load(e.target.value);};
 $('#bSettings').onclick=()=>openModal(`<h3>הגדרות</h3><div class="f"><label>מפתח Claude API (אופציונלי – לניסוח התקציר)</label><input id="sKey" type="password" value="${esc(settings.apiKey)}" placeholder="sk-ant-…"><div class="hint">נשמר רק בדפדפן זה. הנתונים נשלחים רק בלחיצה על "ניסוח עם Claude".</div></div>
