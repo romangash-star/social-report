@@ -184,12 +184,37 @@ header.top .logo{width:30px;height:30px;flex:none}
   #pmap{height:340px!important}.selbox{flex-direction:column;align-items:stretch}
   .navbtns{gap:8px}.navbtns .btn{flex:1;font-size:13px}
 }
+/* ---- quick mode ---- */
+body.quick nav.steps{display:none}
+body.quick .layout{grid-template-columns:1fr}
+body.quick main{margin:0 auto;max-width:1060px}
+body.quick #bDemo,body.quick #bImport,body.quick #bSettings{display:none}
+#bMode{font-weight:600}
+.qhero{text-align:center;padding:6px 0 10px}.qhero h2{margin:0 0 6px;color:#0C3058;font-size:26px}.qhero p{margin:0;color:var(--muted)}
+.qn{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#0C3058;color:#fff;font-size:14px;margin-left:8px;vertical-align:middle}
+.qgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:18px}
+.ql{display:block;font-weight:600;margin:12px 0 4px;font-size:14px}.ql:first-child{margin-top:0}
+.qgrid .inp{width:100%;box-sizing:border-box;min-width:0;font:inherit}
+.qgrid textarea.inp{resize:vertical;min-height:110px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:2px;background:#F2F6F8;border:1px solid var(--line);border-radius:999px;padding:3px 4px 3px 10px;font-size:13.5px}
+.chip.ok{border-color:#50B0A0}.chip.bad{border-color:#B4532A;background:#FBEFE9}
+.chip button{border:0;background:none;cursor:pointer;color:var(--muted);font-size:13px;padding:0 5px;border-radius:50%}
+.qgo{text-align:center;margin:18px 0 24px}.qgo .small{margin-top:6px}
+.btn.big{font-size:19px;padding:12px 36px;border-radius:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg button{border:0;background:#fff;padding:7px 12px;cursor:pointer;font:inherit;font-size:14px}.seg button+button{border-right:1px solid var(--line)}.seg button.on{background:#0C3058;color:#fff}
+.qmiss{margin:4px 0 14px;padding-inline-start:20px}.qmiss li{margin:5px 0}.qmiss .qsrc{color:var(--muted)}
+.qgrp{margin:14px 0 2px;color:#206070;font-size:15px}
+@media (max-width:860px){.qgrid{grid-template-columns:1fr}.seg{display:flex;width:100%}.seg button{flex:1;font-size:12.5px;padding:7px 4px}.btn.big{width:100%}}
+@media print{body.quick .card,body.quick .qhero,body.quick .qgo{display:none}}
 </style>
 </head>
 <body>
 <header class="top">
   <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="12" width="7" height="17" rx="1" fill="#50B0A0"/><rect x="12.5" y="5" width="7" height="24" rx="1" fill="#fff"/><rect x="22" y="9" width="7" height="20" rx="1" fill="#50B0A0"/></svg><h1>מחולל דו״ח חברתי</h1><span class="sub">התחדשות עירונית · לפי מדריך 3.0 של הרשות הממשלתית<br><span class="disclaimer">כלי עזר עצמאי – אינו כלי רשמי של הרשות</span></span>
   <span class="sp"></span>
+  <button id="bMode"></button>
   <select id="projSel" title="פרויקטים שמורים" aria-label="פרויקטים שמורים"></select>
   <button id="bNew">+ פרויקט חדש</button>
   <button id="bDemo" title="פרויקט לדוגמה עם נתונים בדויים">דוגמה</button>
@@ -209,7 +234,7 @@ header.top .logo{width:30px;height:30px;flex:none}
    מחולל דו״ח חברתי – לפי "מדריך להכנת דו״ח חברתי במיזמי התחדשות עירונית"
    גרסה 3.0 (הרשות הממשלתית להתחדשות עירונית, 2026) ותבנית הבסיס
    ===================================================================== */
-const VER='3.0';
+const VER='3.2';
 const GUIDE_LINKS=[
   {t:'דף הפרסום של המדריך באתר הרשות (gov.il)',u:'https://www.gov.il/he/departments/publications/reports/doch_chevrati_hitchadshut_ironit',d:'הדף הרשמי'},
   {t:'מדריך גרסה 2.0 (פברואר 2021) – לעיון היסטורי',u:'https://www.gov.il/BlobFolder/reports/doch_chevrati_hitchadshut_ironit/he/hithadshut_ironit_documents_madrich_doch_chevrati_v2_final.pdf',d:'הוחלף ע״י 3.0'},
@@ -397,7 +422,7 @@ function totals(){const b=S.buildings;const sum=k=>b.reduce((s,x)=>s+(n(x[k])||0
   let units=sum('units');const com=sum('commercial'),signed=sum('signed');const unitsEst=!units&&n(S.compound.totalUnits)>0;if(unitsEst)units=n(S.compound.totalUnits);const years=b.map(x=>n(x.year)).filter(Boolean);
   const ten={};TENURE.forEach(t=>ten[t.k]=sum(t.k));const tenSum=TENURE.reduce((s,t)=>s+ten[t.k],0);
   const shared=b.filter(x=>n(x.units)>=4&&x.btype!=='צמוד קרקע').length;
-  return{nb:b.length,units,com,all:units+com,signed,signPct:pct(signed,units),yMin:years.length?Math.min(...years):null,yMax:years.length?Math.max(...years):null,ten,tenSum,unitsEst,atyp:sum('atypical'),shared};}
+  return{nb:b.length,units,com,all:units+com,signed,signPct:b.some(x=>has(x.signed))?pct(signed,units):null,yMin:years.length?Math.min(...years):null,yMax:years.length?Math.max(...years):null,ten,tenSum,unitsEst,atyp:sum('atypical'),shared};}
 const tenBase=()=>{const t=totals();return t.tenSum||t.all;};
 const ownRate=()=>{const t=totals();return t.tenSum?pct(t.ten.ownRes,t.units):null;};
 const rentRate=()=>{const t=totals();return t.tenSum?pct(t.ten.rent,t.units):null;};
@@ -479,7 +504,7 @@ function renderNav(){let g='',h='';STEPS.forEach((s,i)=>{if(s.g!==g){g=s.g;h+=`<
   h+=`<button class="${s.id===cur?'on':''}" data-go="${s.id}"><span class="num">${i+1}</span><span>${s.t}</span>${sc!=null?`<span class="bar"><i style="width:${Math.round(sc*100)}%"></i></span>`:''}</button>`;});$('#nav').innerHTML=h;}
 function renderProjSel(){const idx=index();$('#projSel').innerHTML=idx.map(p=>`<option value="${p.id}" ${p.id===S.id?'selected':''}>${esc(p.name)}</option>`).join('')||'<option>אין פרויקטים שמורים</option>';}
 let map=null;
-function go(id){cur=id;if(map){try{map.off();map.remove();}catch(e){}map=null;}const i=STEPS.findIndex(s=>s.id===id),s=STEPS[i];
+function go(id){if(id==='quick')return goQuick();document.body.classList.remove('quick');const mb=$('#bMode');if(mb)mb.textContent='‹ מסך פשוט';cur=id;if(map){try{map.off();map.remove();}catch(e){}map=null;}const i=STEPS.findIndex(s=>s.id===id),s=STEPS[i];
   $('#main').innerHTML=`<div class="row" style="justify-content:space-between"><h2 class="stitle">${i+1}. ${s.t}</h2><span class="pill rt">תוצר: ${RT_LABEL[S.meta.reportType]||''}</span></div><p class="lead">${s.g}</p>${guideBox(id)}${VIEWS[id]()}
   <div class="navbtns noprint">${i>0?`<button class="btn" data-go="${STEPS[i-1].id}">→ ${STEPS[i-1].t}</button>`:'<span></span>'}${i<STEPS.length-1?`<button class="btn pri" data-go="${STEPS[i+1].id}">${STEPS[i+1].t} ←</button>`:''}</div>`;
   renderNav();a11yTables();if(AFTER[id])AFTER[id]();window.scrollTo(0,0);try{history.replaceState(null,'','#'+id)}catch(e){}}
@@ -766,7 +791,7 @@ function compactData(){const{photos,env,...rest}=S;return{...rest,survey:{...S.s
 
 /* ---------------- AUTO TEXT ---------------- */
 function autoSummary(){const t=totals(),P=S.pop,M=S.meta,L=[];
-  L.push(`מתחם ${M.name||'[שם]'} ב${M.city||'[עיר]'}${M.neighborhood?', שכונת '+M.neighborhood:''}, כולל ${t.nb} מבנים ובהם ${t.units} יח״ד${t.com?` ו־${t.com} יחידות מסחר/תעסוקה`:''}${t.yMin?`, שנבנו בשנים ${t.yMin}${t.yMax!==t.yMin?'–'+t.yMax:''}`:''}.`);
+  L.push(`מתחם ${M.name||'[שם]'} ב${M.city||'[עיר]'}${M.neighborhood?', שכונת '+M.neighborhood:''}${t.nb?`, כולל ${t.nb===1?'מבנה אחד':t.nb+' מבנים'}`:''}${t.unitsEst?` (במתחם כולו כ־${t.units} יח״ד לפי מאגר המתחמים)`:` ובהם ${t.units} יח״ד`}${t.com?` ו־${t.com} יחידות מסחר/תעסוקה`:''}${t.yMin?`, שנבנו בשנים ${t.yMin}${t.yMax!==t.yMin?'–'+t.yMax:''}`:''}.`);
   const o=ownRate(),r=rentRate(),p=phRate();if(o!=null)L.push(`כ־${o}% מהדירות בבעלות מתגוררים, ${r??'—'}% בשכירות${p?` ו־${p}% דיור ציבורי`:''}.`);
   if(has(P.eld65))L.push(`במתחם ${P.eld65} אזרחים ותיקים${P.eld70?` (מהם ${P.eld70} בני 70+)`:''}${has(P.welfare)?` ו־${P.welfare} משקי בית נתמכי רווחה`:''}.`);
   if(t.signPct!=null)L.push(`שיעור ההתקשרות הכולל עומד על ${t.signPct}%${S.org.devCompany?` מול ${S.org.devCompany}`:''}.`);
@@ -779,13 +804,13 @@ function autoPopFull(){const a=agg();if(!a.N){toast('אין תשובות סקר'
   if(!has(S.popFull.ses))S.popFull.ses=`התפלגות ההכנסה ביחס לממוצע (הגדרה עצמית): ${top(a.income)||'—'}. [להשלמה: השוואה לפי זיקה לנכס וחוו״ד מחלקת הרווחה]`;
   if(!has(S.popFull.resilience))S.popFull.resilience=`ממוצע הדירוג לקשר עם השכנים ${a.neigh??'—'}/5, ולתחושת השייכות לשכונה ${a.belong??'—'}/5. ${a.likes.length?'מה אוהבים: '+a.likes.slice(0,6).join('; ')+'.':''} [להשלמה: חוות דעת היועץ על החוסן הקהילתי]`;
   save();go('pop');}
-function autoConcl(){const t=totals(),a=agg(),add=(f,c)=>S.concl.push({finding:f,co:c});
+function autoConcl(stay){const t=totals(),a=agg(),add=(f,c)=>S.concl.push({finding:f,co:c});
   if(rentRate()>30)add(`שיעור שכירות גבוה (${rentRate()}%).`,'אתגר: סיכון לדחיקת שוכרים; הזדמנות: דיור בהישג יד בתמהיל.');
   if(n(S.pop.eld65))add(`${S.pop.eld65} אזרחים ותיקים במתחם.`,'אתגר: מעבר דירה ותקופת שכירות; הזדמנות: בינוי־פינוי ודירות מותאמות.');
   if(t.signPct!=null)add(`שיעור התקשרות כולל ${t.signPct}%, בפיזור לא אחיד בין הבניינים.`,'הזדמנות: מתחמי מימוש לפי בשלות; אתגר: בניינים עם התקשרות נמוכה.');
   if(has(S.compound.role))add(S.compound.role,'יש לשמר את התפקוד הקיים בתכנון.');
   if(a.N&&a.likes.length)add(`מקומות ותכונות שהתושבים אוהבים: ${a.likes.slice(0,4).join('; ')}.`,'חוזקה לשימור.');
-  save();go('concl');}
+  save();if(!stay)go('concl');}
 
 /* ---------------- BUILDING CARDS ---------------- */
 function buildingCards(){if(!S.buildings.length)return gap('בניינים');const t=totals();
@@ -1104,10 +1129,10 @@ async function pickCompound(id){if(!UR)return;const f=UR.features.find(x=>String
     else{toast('מחפש כתובות בתוך גבולות המתחם (OpenStreetMap)…',4000);const a=await osmAddressesIn(f.geometry);
       if(a&&a.length){a.slice(0,60).forEach(b=>S.buildings.push({id:uid(),...b}));msg=`נוספו ${Math.min(a.length,60)} כתובות מתוך גבולות המתחם – לאמת`;}
       else msg='לא נמצאו כתובות אוטומטית – אפשר להמשיך למילוי אוטומטי לפי מרכז המתחם, או ללחוץ על בניינים במפה כדי להוסיף אותם';}}
-  save(true);go('project');toast(msg,5000);}
+  quickStale();save(true);go(home());toast(msg,5000);}
 async function revGeocode(lat,lng){const r=await jget(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=he&zoom=18&addressdetails=1`,15000);const a=r.address||{};
   return{street:a.road||a.pedestrian||a.residential||'',num:a.house_number||'',city:a.city||a.town||a.village||'',sub:a.suburb||a.neighbourhood||'',display:r.display_name||''};}
-function addBuildingAt(street,num,lat,lng){if(S.buildings.some(b=>b.street===street&&String(b.num)===String(num))){toast('הכתובת כבר ברשימה');return;}S.buildings.push({id:uid(),street,num,lat,lng});save(true);go('project');toast(`נוסף: ${street} ${num}`);}
+function addBuildingAt(street,num,lat,lng){if(S.buildings.some(b=>b.street===street&&String(b.num)===String(num))){toast('הכתובת כבר ברשימה');return;}S.buildings.push({id:uid(),street,num,lat,lng});quickStale();save(true);go(home());toast(`נוסף: ${street} ${num}`);}
 VIEWS_PICKER=()=>{const sel=S.compound.ur;return `
 <div class="card picker"><h3>🗺️ בחירת מתחם התחדשות עירונית או כתובת</h3>
  <p class="small" style="margin-top:0">המפה מציגה את <b>מתחמי הפינוי־בינוי המוכרזים</b> (שכבה רשמית של משרד הבינוי והשיכון, כמו ב<a href="https://www.gov.il/apps/moch/viewlist/renew/mitchamim-rashut" target="_blank" rel="noopener">רשימת המתחמים באתר הרשות</a>). לחצו על מתחם כדי לבחור אותו, או חפשו כתובת / לחצו על בניין במפה כדי להוסיף אותו.</p>
@@ -1145,8 +1170,76 @@ async function addrSearchGo(){const q=$('#addrSearch').value.trim();if(!q||!map)
   window._rev={street:a.road||'',num:a.house_number||'',city:a.city||a.town||a.village||'',lat,lng};
   L.popup().setLatLng([lat,lng]).setContent(`<div class="urpop"><b>${esc(a.road||'')} ${esc(a.house_number||'')}</b>, ${esc(window._rev.city)}${f?`<br>בתוך מתחם: <b>${esc(f.properties.ShemMitcham)}</b> <button class="btn sm" data-pickur="${f.properties.MisparProject}">בחירת המתחם</button>`:'<br><span class="small">הכתובת אינה בתוך מתחם מוכרז</span>'}<br>${a.road&&a.house_number?'<button class="btn pri sm" data-addrev="1" style="margin-top:6px">הוספה לרשימת הבניינים</button>':''}</div>`).openOn(map);}catch(e){toast('החיפוש נכשל: '+e.message);}}
 
+/* ---------------- QUICK MODE: addresses → one click → report + what is missing ---------------- */
+const home=()=>cur==='quick'?'quick':'project';
+const WG={muni:'מהעירייה',field:'עבודת שטח – סיור וראיונות',org:'מהנציגות, היזם וצוות התכנון',appr:'משמאי',ph:'מהחברה המשכנת',survey:'מהסקר החברתי',meta:'פרטי הפרויקט',open:'נתונים פתוחים שלא נמצאו',write:'כתיבה של היועץ/ת'};
+const QWHERE={
+ 'שם המתחם':['meta','השם כפי שמופיע בתכנית'],'עיר':['meta',''],'מסלול':['meta','מסלול רשויות או מיסוי – מהמנהלת או מהיזם'],'ראש צוות התכנון':['meta','משרד האדריכלים שעורך את התכנית'],'יועץ חברתי':['meta','שם היועץ/ת והחברה המגישה'],
+ 'מקורות מוניציפליים':['muni','פנייה לאגף ההנדסה, לארנונה ולרווחה'],'לפחות סיור אחד':['field','תאריך הסיור והמשתתפים'],'ראיונות עם גורמי מפתח':['field','רכז/ת חברתי במנהלת, עו״ס קהילתי, נציגות, ועד בית'],
+ 'טבלת נתונים השוואתית':['open','הלמ״ס – מפקד 2022 לפי אזור סטטיסטי'],'משפט מסכם על הא״ס':['write',''],'מסמכי מדיניות':['muni','תכנית מתאר ומסמכי מדיניות – אגף ההנדסה'],'מיזמי בנייה בסביבה':['muni','מיזמים מאושרים ובתכנון – אגף ההנדסה / מינהל התכנון'],'משמעות חברתית של המיזמים':['write',''],
+ 'כתובות ויח״ד':['muni','מספר הדירות בכל בניין – ארנונה או נסחי טאבו'],'רמת תחזוקה לכל בניין':['field','דירוג 1–5 לכל בניין בסיור'],'גבולות המתחם':['org','גושים וחלקות ואימות הקו הכחול'],'תפקוד המתחם במרחב':['field','תצפית בסיור'],'תמונות':['field','צילומים מהסיור'],
+ 'זיקה לנכס לפי בניין':['muni','בעלים / שוכרים / דיור ציבורי – ארנונה ונסחי טאבו'],'השוואה עירונית/ארצית':['open','הלמ״ס – מפקד 2022'],'תמהיל גודל יח״ד':['muni','שטח הדירות – ארנונה או נסחי טאבו'],'נטל עלות הדיור':['appr','מחירי שכירות ומכירה לפי מספר חדרים'],
+ 'אפיון שוכרים (מעל 30%)':['survey',''],'הרחבת דיור ציבורי (מעל 10%)':['ph','עמידר / עמיגור / חלמיש ומשרד הבינוי'],
+ 'אוכלוסיות ייחודיות':['muni','מחלקת הרווחה: בני 65+, אנשים עם מוגבלויות, נתמכי רווחה'],'אפיון האוכלוסייה':['write',''],'גורמים ודמויות מפתח':['field','מהראיונות ומהנציגות'],'ניתוח דמוגרפי וחברתי־תרבותי':['survey',''],'מצב סוציו־אקונומי וחוסן':['survey',''],
+ 'שנת תחילה ומקור היוזמה':['org',''],'הסמכת נציגויות לפי בניין':['org','מכתבי הסמכה של הנציגויות'],'התקשרות לפי בניין':['org','מספר החותמים בכל בניין'],'ייצוג משפטי':['org','משרד עורכי הדין של הדיירים'],'פרטי החברה היזמית':['org',''],'סטטוס מסמכים':['org','מכתבי נציגות, ייפוי כוח, תצהירים'],'עמדות הדיירים':['survey',''],
+ 'מוסדות ציבור':['open','לבדוק בסיור'],'שטחים פתוחים':['field',''],'תנועה והתניידות':['field','רמת שירות התחבורה הציבורית והליכתיות'],
+ 'סקרים לפי היעד':['survey',''],'סיכום שיתוף הציבור':['survey','מפגשים ושיתוף ציבור'],
+ 'טבלת מסקנות':['write',''],'טבלת המלצות':['write',''],'קריטריונים לבחינת חלופות':['write',''],'טבלת הערכת חלופות':['org','החלופות מהאדריכל'],'חוות דעת היועץ על החלופות':['write',''],
+ 'גאנט עבודה חברתית':['write',''],'רציונל':['write',''],'תקציר (עד 250 מילים)':['write','']};
+let qBusy=false;
+VIEWS.quick=()=>{const sel=S.compound.ur,bl=S.buildings,ready=(bl.length||S.compound.geo)&&has(S.meta.city);const done=S.quick&&S.quick.at;
+ return `<div class="qhero"><h2>דו״ח חברתי בלחיצה אחת</h2><p>מסמנים את הכתובות ← לוחצים "הפקת דו״ח" ← מקבלים טיוטה ורשימה של מה שחסר ומאיפה משיגים</p></div>
+<div class="card"><h3><span class="qn">1</span>הכתובות</h3>
+ <div class="qgrid"><div>
+  <label class="ql" for="qCity">עיר</label><input id="qCity" class="inp" data-p="meta.city" value="${esc(S.meta.city)}" placeholder="למשל: חולון">
+  <label class="ql" for="qAddr">הדביקו כתובות – שורה לכל בניין</label><textarea id="qAddr" class="inp" placeholder="ההסתדרות 197&#10;ההסתדרות 199-207&#10;סוקולוב 12"></textarea>
+  <button class="btn" id="qAdd" style="margin-top:6px">הוספה למפה</button> <span id="qGeo" class="small"></span>
+  <label class="ql" for="urSearch">או בחרו מתחם מוכרז</label><input id="urSearch" class="inp" placeholder="חיפוש מתחם – למשל: חולון ההסתדרות"><div id="urList" class="urlist"></div>
+ </div><div>
+  <div id="pmap" class="map" style="height:400px"><div class="small" style="padding:12px">טוען מפה…</div></div>
+  <p class="small" style="margin:6px 0 0">לחיצה על בניין במפה מוסיפה אותו. לחיצה על מתחם צבעוני מאפשרת לבחור אותו.</p>
+ </div></div>
+ ${sel?`<div class="note" style="background:#EEF6F4">מתחם: <b>${esc(sel.ShemMitcham)}</b>, ${esc(sel.Yeshuv)} · ${esc(sel.yachadKayamRashut||'—')} יח״ד קיימות <button class="btn ghost sm" id="unpick">ביטול הבחירה</button></div>`:''}
+ <div class="chips">${bl.map((b,i)=>`<span class="chip ${b.lat?'ok':b.geoErr?'bad':''}" title="${b.lat?'מסומן במפה':b.geoErr?'לא נמצא במפה – לחצו על הבניין במפה':'טרם אותר'}">${esc(bName(b))}<button data-qdel="${i}" aria-label="הסרת ${esc(bName(b))}">✕</button></span>`).join('')||'<span class="small">עדיין לא נבחרו כתובות</span>'}
+ ${bl.length>1?'<button class="btn ghost sm" id="qClear">ניקוי הכל</button>':''}</div>
+</div>
+<div class="qgo"><button class="btn pri big" id="qRun" ${ready?'':'disabled'}>⚡ הפקת דו״ח חברתי</button>
+ <div class="small" id="qHint">${ready?(done&&S.quick.stale?'הכתובות השתנו – לחצו שוב כדי לעדכן':'המערכת תחפש מידע ב־11 מקורות פתוחים (כחצי דקה)'):!has(S.meta.city)?'חסרה עיר':'בחרו כתובות או מתחם'}</div></div>
+${done?quickResult():''}`;};
+function quickResult(){const miss=relevantChecks().filter(c=>!c.ok());const groups={};
+ miss.forEach(c=>{const w=QWHERE[c.l]||['write',''];(groups[w[0]]=groups[w[0]]||[]).push({c,w:w[1]});});
+ const n0=relevantChecks().length;
+ return `<div class="card" id="qRes"><h3><span class="qn">2</span>טיוטת הדו״ח מוכנה</h3>
+ <p class="small" style="margin-top:0">נוצרה ב־${new Date(S.quick.at).toLocaleString('he-IL',{dateStyle:'short',timeStyle:'short'})} ממקורות פתוחים. הושלמו ${n0-miss.length} מתוך ${n0} פרקי חובה; השאר מסומנים בדו״ח <span class="gap">[להשלמה]</span>.</p>
+ <div class="row"><div class="seg" role="group" aria-label="סוג הדו״ח">${RT.map(r=>`<button class="${S.meta.reportType===r?'on':''}" data-qrt="${r}">${RT_LABEL[r]}</button>`).join('')}</div><span class="sp"></span>
+ <button class="btn pri" id="expWord">⬇ Word</button><button class="btn" id="expPrint">🖨 PDF</button></div></div>
+<div class="card"><h3><span class="qn">3</span>מה חסר ומאיפה משיגים${miss.length?` – ${miss.length} פריטים`:''}</h3>
+ ${miss.length?`<p class="small" style="margin-top:0">אלה נתונים שאינם פומביים או שדורשים עבודת שטח. "השלמה" פותחת את המקום בכלי שבו מזינים אותם.</p>`+
+ Object.keys(WG).filter(g=>groups[g]).map(g=>`<h4 class="qgrp">${WG[g]}</h4><ul class="qmiss">${groups[g].map(({c,w})=>`<li><b>${esc(c.l)}</b>${w?` <span class="qsrc">– ${esc(w)}</span>`:''} <a href="#" data-go="${c.s}">השלמה ›</a></li>`).join('')}</ul>`).join(''):'<p>✓ כל הפריטים הנדרשים הוזנו.</p>'}
+</div>
+<div class="paper" id="paper">${buildReport(S.meta.reportType)}</div>`;}
+function goQuick(){cur='quick';if(map){try{map.off();map.remove();}catch(e){}map=null;}document.body.classList.add('quick');
+ $('#main').innerHTML=VIEWS.quick();$('#bMode').textContent='עריכה מפורטת ›';a11yTables();initPicker();try{history.replaceState(null,'','#')}catch(e){}}
+function parseAddrLines(txt){const out=[];txt.split(/\n+/).map(l=>l.trim()).filter(Boolean).forEach(l=>{const p=parseCompoundName(l);if(p.length)out.push(...p);else{const m=l.match(/^(.*?)\s+(\d+\S*)$/);out.push(m?{street:m[1],num:m[2]}:{street:l,num:''});}});return out;}
+async function quickGeocode(){if(qBusy)return;qBusy=true;const list=S.buildings.filter(b=>!b.lat&&!b.geoErr&&b.street);
+ for(const [i,b] of list.entries()){const el=$('#qGeo');if(el)el.textContent=`מסמן במפה ${i+1}/${list.length}…`;if(i)await sleep(1100);
+  try{const r=await geocodeOne(b,S.meta.city||'');if(r){b.lat=r.lat;b.lng=r.lng;b.geoErr=false;}else b.geoErr=true;}catch(e){b.geoErr=true;}}
+ qBusy=false;save(true);if(cur==='quick')goQuick();const bad=list.filter(b=>b.geoErr).length;if(list.length)toast(bad?`${bad} כתובות לא נמצאו במפה – אפשר ללחוץ על הבניין במפה`:'הכתובות סומנו במפה',4000);}
+async function quickRun(){if(qBusy){toast('רגע – עדיין מסמן כתובות במפה');return;}
+ if(!has(S.meta.name))S.meta.name=S.compound.ur?.ShemMitcham||S.buildings.slice(0,3).map(bName).join(', ')+(S.buildings.length>3?' ועוד':'');
+ if(!has(S.meta.ptype))S.meta.ptype='פינוי־בינוי';
+ await autoFill();
+ if(!S.concl.length)autoConcl(true);
+ if(!S.recs.length)suggestRecs().forEach(s=>S.recs.push({sid:s.id,type:s.type,finding:s.finding,rec:s.rec,resp:s.resp,stage:s.stage,where:s.where}));
+ if(!has(S.summary))S.summary=autoSummary();
+ S.quick={at:new Date().toISOString(),stale:false};save(true);
+ const b=$('#afClose');if(b){b.textContent='לטיוטת הדו״ח ←';b.onclick=()=>{closeModal();const r=$('#qRes');if(r)r.scrollIntoView({behavior:'smooth'});};}
+ goQuick();}
+function quickStale(){if(S.quick)S.quick.stale=true;}
+
 /* ---------------- EVENTS ---------------- */
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='addrSearch')addrSearchGo();if(e.key==='Escape'&&$('#modal').classList.contains('on')&&!($('#afClose')&&$('#afClose').disabled))closeModal();});
+document.addEventListener('input',e=>{if(cur==='quick'&&e.target.id==='qCity'){setTimeout(()=>{const b=$('#qRun'),h=$('#qHint');const ok=(S.buildings.length||S.compound.geo)&&has(S.meta.city);if(b)b.disabled=!ok;if(h&&ok)h.textContent='המערכת תחפש מידע ב־11 מקורות פתוחים (כחצי דקה)';},0);}});
 document.addEventListener('input',e=>{if(e.target.id==='urSearch'){urSearch(e.target.value);return;}const el=e.target,p=el.dataset.p;if(!p)return;let v=el.value;if(el.dataset.num)v=v===''?null:+v;setP(p,v);
   if(/^buildings\.\d+\.(street|num)$/.test(p)){const b=S.buildings[+p.split('.')[1]];if(b){b.lat=null;b.lng=null;}}
   if(p==='summary'){const w=words(v);const wc=$('#wc');if(wc){wc.textContent=w+' / 250 מילים';wc.classList.toggle('over',w>250);}}save();});
@@ -1159,7 +1252,7 @@ document.addEventListener('change',e=>{const el=e.target;
   if(el.id==='repType'){S.meta.reportType=el.value;save(true);go('report');return;}
   if(el.id==='photoIn'){Promise.all([...el.files].map(resizeImg)).then(arr=>{arr.forEach(d=>S.photos.push({id:uid(),data:d,caption:'',bld:''}));save();go('compound');});return;}
   if(el.id==='csvIn'){const f=el.files[0];if(f){const r=new FileReader();r.onload=()=>importCSV(r.result);r.readAsText(f,'utf-8');}return;}
-  if(el.id==='importFile'){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);if(!p.meta)throw 0;S=deepMerge(blank(),p);save(true);go('project');toast('הפרויקט נטען');}catch(err){toast('קובץ לא תקין');}};r.readAsText(f);el.value='';return;}
+  if(el.id==='importFile'){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);if(!p.meta)throw 0;S=deepMerge(blank(),p);save(true);go(home());toast('הפרויקט נטען');}catch(err){toast('קובץ לא תקין');}};r.readAsText(f);el.value='';return;}
   if(el.dataset.p&&el.tagName==='SELECT'&&/^(buildings\.\d+\.maint|org\.agreement)$/.test(el.dataset.p))go(cur);});
 document.addEventListener('click',async e=>{const gc=e.target.closest('[data-gc]');if(gc){const[i,j]=gc.dataset.gc.split('.').map(Number);S.gantt[i].m[j]=!S.gantt[i].m[j];gc.classList.toggle('on');save();return;}
   const b=e.target.closest('button,a');if(!b)return;const d=b.dataset;
@@ -1174,7 +1267,13 @@ document.addEventListener('click',async e=>{const gc=e.target.closest('[data-gc]
   if(d.urfocus){urFocus(d.urfocus);return;}
   if(d.addrev){const a=window._rev;if(a){if(!has(S.meta.city)&&a.city)S.meta.city=a.city;addBuildingAt(a.street,a.num,a.lat,a.lng);}return;}
   if(b.id==='addrGo'){addrSearchGo();return;}
-  if(b.id==='unpick'){S.meta.compoundId=null;S.compound.geo=null;S.compound.ur=null;save(true);go('project');return;}
+  if(b.id==='unpick'){S.meta.compoundId=null;S.compound.geo=null;S.compound.ur=null;quickStale();save(true);go(home());return;}
+  if(b.id==='bMode'){go(cur==='quick'?'project':'quick');return;}
+  if(b.id==='qRun'){quickRun();return;}
+  if(b.id==='qAdd'){const t=$('#qAddr').value;if(!t.trim()){toast('הדביקו כתובות, שורה לכל בניין');return;}if(!has(S.meta.city)){toast('הזינו קודם עיר');$('#qCity').focus();return;}const add=parseAddrLines(t).filter(x=>!S.buildings.some(b=>b.street===x.street&&String(b.num)===String(x.num)));add.forEach(x=>S.buildings.push({id:uid(),...x}));quickStale();save(true);goQuick();quickGeocode();return;}
+  if(d.qdel!=null){S.buildings.splice(+d.qdel,1);quickStale();save(true);goQuick();return;}
+  if(b.id==='qClear'){S.buildings=[];quickStale();save(true);goQuick();return;}
+  if(d.qrt){S.meta.reportType=d.qrt;save(true);goQuick();const r=$('#qRes');if(r)r.scrollIntoView();return;}
   if(b.id==='geoB'){if(!S.meta.city){toast('הזינו עיר בשלב 1');return;}geocodeAll();return;}
   if(b.id==='fetchEnv'){fetchEnv();return;}
   if(b.id==='instFill'){const c=S.env.center;const ex=new Set(S.svc.inst.map(x=>x.name));(S.env.pois||[]).filter(p=>PUBLIC_CATS.includes(p.cat)&&p.name&&hav(c,[p.lat,p.lng])<=560).forEach(p=>{const nm=`${CATS.find(x=>x.k===p.cat).l.split(' ')[0]} – ${p.name}`;if(!ex.has(nm)){S.svc.inst.push({name:nm,addr:p.addr||'',alt:'',notes:''});ex.add(nm);}});save();go('svc');toast('מוסדות בטווח 7 דק׳ הליכה נוספו – יש לסמן מענה חלופי');return;}
@@ -1197,7 +1296,7 @@ document.addEventListener('click',async e=>{const gc=e.target.closest('[data-gc]
   if(b.id==='sumAI'){const m=$('#aimsg');m.textContent='כותב…';try{S.summary=await askClaude('כתוב תקציר לדו"ח החברתי (עד 250 מילים, פסקה אחת או שתיים) המציג את המתחם מנקודת המבט המקצועית של היועץ החברתי: הסוגיות המרכזיות, החוזקות, החסמים והכיוונים להמלצות.',compactData());save();go('summary');}catch(err){m.textContent='⚠ '+err.message;}return;}
   if(b.id==='expWord'){exportWord();return;}if(b.id==='expHtml'){exportHtml();return;}if(b.id==='expPrint'){window.print();return;}
   if(b.id==='delExport'){exportJson();return;}
-  if(b.id==='delOk'){clearTimeout(saveTimer);try{localStorage.removeItem(LS_PREFIX+S.id);}catch(e){}const idx=index().filter(p=>p.id!==S.id);lsSet(LS_INDEX,idx);closeModal();const nx=idx.length&&lsGet(LS_PREFIX+idx[0].id);S=nx?deepMerge(blank(),nx):blank();renderProjSel();$('#saveState').textContent='';go('project');toast('הפרויקט נמחק');return;}
+  if(b.id==='delOk'){clearTimeout(saveTimer);try{localStorage.removeItem(LS_PREFIX+S.id);}catch(e){}const idx=index().filter(p=>p.id!==S.id);lsSet(LS_INDEX,idx);closeModal();const nx=idx.length&&lsGet(LS_PREFIX+idx[0].id);S=nx?deepMerge(blank(),nx):blank();renderProjSel();$('#saveState').textContent='';go(home());toast('הפרויקט נמחק');return;}
   if(d.close){closeModal();return;}
   if(b.id==='setOk'){settings.apiKey=$('#sKey').value.trim();settings.model=$('#sModel').value.trim()||'claude-sonnet-5-5';CATS.forEach(c=>{const v=n($('#th_'+c.k).value);if(v)settings.th[c.k]=v;else delete settings.th[c.k];});lsSet(LS_SETTINGS,settings);closeModal();go(cur);toast('ההגדרות נשמרו');return;}
 });
@@ -1231,7 +1330,7 @@ function demo(){const d=blank();
   return d;}
 
 /* ---------------- INIT ---------------- */
-$('#bNew').onclick=()=>{save(true);S=blank();save(true);go('project');toast('נפתח פרויקט חדש');};
+$('#bNew').onclick=()=>{save(true);S=blank();save(true);go(home());toast('נפתח פרויקט חדש');};
 $('#bDemo').onclick=()=>{save(true);S=demo();save(true);go('project');toast('נטען פרויקט לדוגמה (נתונים בדויים)');};
 $('#bDel').onclick=()=>openModal(`<h3>מחיקת הפרויקט</h3><p>למחוק את הפרויקט "<b>${esc(S.meta.name||'פרויקט ללא שם')}</b>" מהדפדפן הזה? אי אפשר לבטל את הפעולה. מומלץ לשמור קודם לקובץ.</p><div class="row"><button class="btn" id="delExport">⬇ שמירה לקובץ</button><button class="btn danger" id="delOk">מחיקה</button><button class="btn" data-close="1">ביטול</button></div>`);
 $('#bExport').onclick=exportJson;$('#bImport').onclick=()=>$('#importFile').click();
@@ -1241,7 +1340,7 @@ $('#bSettings').onclick=()=>openModal(`<h3>הגדרות</h3><div class="f"><labe
  <p class="small">הנחות עבודה; סף הבית לפי המדריך להקצאת שטחי ציבור – עד 7 דקות הליכה.</p><div class="row" style="margin-top:12px"><button class="btn pri" id="setOk">שמירה</button><button class="btn" data-close="1">ביטול</button></div>`);
 $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
 (function init(){const st=lsGet(LS_SETTINGS);if(st)settings=Object.assign(settings,st);const idx=index();if(idx.length){const p=lsGet(LS_PREFIX+idx[0].id);if(p)S=deepMerge(blank(),p);}
-  renderProjSel();const h=(location.hash||'').slice(1);go(STEPS.some(s=>s.id===h)?h:'project');})();
+  renderProjSel();const h=(location.hash||'').slice(1);go(STEPS.some(s=>s.id===h)?h:'quick');})();
 
 </script>
 </body>
